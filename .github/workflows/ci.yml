@@ -46,7 +46,7 @@ jobs:
         run: ./gradlew :app:assembleDebug --no-daemon --console=plain
 
       - name: Upload debug APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: still-launcher-debug-${{ github.sha }}
           path: app/build/outputs/apk/debug/app-debug.apk
@@ -55,7 +55,7 @@ jobs:
 
       - name: Upload reports on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: reports-${{ github.sha }}
           path: |
