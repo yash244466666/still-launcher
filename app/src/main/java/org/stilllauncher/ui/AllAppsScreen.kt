@@ -1,7 +1,19 @@
 package org.stilllauncher.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -9,11 +21,13 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -22,6 +36,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,10 +44,16 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -147,6 +168,17 @@ fun AllAppsScreen(
     val letters = entries.mapIndexedNotNull { index, entry ->
         if (entry is LetterEntry) LetterTarget(entry.letter, index) else null
     }
+    val showIndex = entries.isNotEmpty() && letters.size >= 3
+    val currentLetter by remember(letters) {
+        derivedStateOf {
+            val visible = listState.layoutInfo.visibleItemsInfo
+            val firstVisible = visible.firstOrNull()?.index ?: 0
+            letters.lastOrNull { it.index <= firstVisible }?.letter
+                ?: letters.firstOrNull { target -> visible.any { it.index >= target.index } }?.letter
+        }
+    }
+    var dragLetter by remember { mutableStateOf<String?>(null) }
+    var bubbleLetter by remember { mutableStateOf("") }
 
     ScreenScaffold(
         title = "All apps",
@@ -185,7 +217,11 @@ fun AllAppsScreen(
                 LazyColumn(
                     state = listState,
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = 24.dp)
+                    contentPadding = PaddingValues(
+                        start = if (showIndex) 34.dp else 0.dp,
+                        end = if (showIndex) 34.dp else 0.dp,
+                        bottom = 24.dp
+                    )
                 ) {
                     items(entries, key = { it.id }) { entry ->
                         when (entry) {
@@ -239,19 +275,53 @@ fun AllAppsScreen(
                     }
                 }
 
-                if (entries.isNotEmpty() && letters.size >= 3) {
+                if (showIndex) {
+                    val highlighted = dragLetter ?: currentLetter
                     AlphabetBar(
                         letters = letters,
-                        onSelect = { index ->
-                            scope.launch { listState.scrollToItem(index) }
+                        highlightedLetter = highlighted,
+                        onDragLetter = {
+                            dragLetter = it
+                            if (it != null) bubbleLetter = it
+                        },
+                        onSelect = { index, animate ->
+                            scope.launch {
+                                if (animate) listState.animateScrollToItem(index)
+                                else listState.scrollToItem(index)
+                            }
+                        },
+                        modifier = Modifier
+                            .align(Alignment.CenterStart)
+                            .fillMaxHeight()
+                            .width(30.dp)
+                            .padding(vertical = 8.dp)
+                    )
+                    AlphabetBar(
+                        letters = letters,
+                        highlightedLetter = highlighted,
+                        onDragLetter = {
+                            dragLetter = it
+                            if (it != null) bubbleLetter = it
+                        },
+                        onSelect = { index, animate ->
+                            scope.launch {
+                                if (animate) listState.animateScrollToItem(index)
+                                else listState.scrollToItem(index)
+                            }
                         },
                         modifier = Modifier
                             .align(Alignment.CenterEnd)
                             .fillMaxHeight()
-                            .width(34.dp)
+                            .width(30.dp)
                             .padding(vertical = 8.dp)
                     )
                 }
+
+                LetterBubble(
+                    visible = dragLetter != null,
+                    letter = bubbleLetter,
+                    modifier = Modifier.align(Alignment.Center)
+                )
             }
         }
     }
@@ -291,74 +361,132 @@ private fun firstLetter(label: String): String {
 }
 
 @Composable
-private fun AlphabetBar(
-    letters: List<LetterTarget>,
-    onSelect: (Int) -> Unit,
+private fun LetterBubble(
+    visible: Boolean,
+    letter: String,
     modifier: Modifier = Modifier
 ) {
-    var active by remember { mutableStateOf<LetterTarget?>(null) }
-    var heightPx by remember { mutableStateOf(1f) }
+    AnimatedVisibility(
+        visible = visible,
+        modifier = modifier,
+        enter = fadeIn(tween(120)) + scaleIn(initialScale = 0.75f),
+        exit = fadeOut(tween(90)) + scaleOut(targetScale = 0.75f)
+    ) {
+        Surface(
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.primary,
+            shadowElevation = 8.dp,
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(
+                letter,
+                color = MaterialTheme.colorScheme.onPrimary,
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(horizontal = 22.dp, vertical = 12.dp)
+            )
+        }
+    }
+}
 
-    Box(modifier = modifier) {
+@Composable
+private fun AlphabetBar(
+    letters: List<LetterTarget>,
+    highlightedLetter: String?,
+    onDragLetter: (String?) -> Unit,
+    onSelect: (Int, Boolean) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var heightPx by remember { mutableStateOf(1f) }
+    val haptic = LocalHapticFeedback.current
+    val activeColor = MaterialTheme.colorScheme.primary
+    val idleColor = MaterialTheme.colorScheme.onSurfaceVariant
+
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(15.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
+            .onSizeChanged { heightPx = it.height.toFloat().coerceAtLeast(1f) }
+            .pointerInput(letters) {
+                awaitEachGesture {
+                    fun targetAt(y: Float): LetterTarget? {
+                        val fraction = (y / heightPx).coerceIn(0f, 0.999f)
+                        return letters.getOrNull((fraction * letters.size).toInt())
+                    }
+
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    var last = targetAt(down.position.y) ?: return@awaitEachGesture
+                    var moved = false
+                    onDragLetter(last.letter)
+                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    down.consume()
+
+                    while (true) {
+                        val event = awaitPointerEvent()
+                        val change = event.changes.firstOrNull { it.pressed } ?: break
+                        if (change.positionChange().getDistance() > 2f) moved = true
+                        val target = targetAt(change.position.y)
+                        if (target != null && target.letter != last.letter) {
+                            last = target
+                            onDragLetter(target.letter)
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            if (moved) onSelect(target.index, false)
+                        }
+                        change.consume()
+                    }
+
+                    if (!moved) onSelect(last.index, true)
+                    onDragLetter(null)
+                }
+            }
+    ) {
         Column(
             Modifier
                 .fillMaxSize()
-                .onSizeChanged { heightPx = it.height.toFloat().coerceAtLeast(1f) }
-                .pointerInput(letters) {
-                    awaitEachGesture {
-                        fun pick(y: Float) {
-                            val fraction = (y / heightPx).coerceIn(0f, 0.999f)
-                            val target = letters.getOrNull((fraction * letters.size).toInt())
-                                ?: return
-                            if (active?.letter != target.letter) {
-                                active = target
-                                onSelect(target.index)
-                            }
-                        }
-
-                        val down = awaitFirstDown(requireUnconsumed = false)
-                        pick(down.position.y)
-                        down.consume()
-
-                        while (true) {
-                            val event = awaitPointerEvent()
-                            val change = event.changes.firstOrNull { it.pressed } ?: break
-                            pick(change.position.y)
-                            change.consume()
-                        }
-                        active = null
-                    }
-                },
-            verticalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceEvenly,
+                .padding(vertical = 4.dp),
+            verticalArrangement = Arrangement.SpaceEvenly,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             letters.forEach { target ->
-                Text(
-                    target.letter,
-                    fontSize = if (letters.size > 20) 9.sp else 10.sp,
-                    color = if (active?.letter == target.letter) {
-                        MaterialTheme.colorScheme.primary
+                val selected = target.letter == highlightedLetter
+                val color by animateColorAsState(
+                    targetValue = if (selected) {
+                        MaterialTheme.colorScheme.onPrimary
                     } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    }
+                        idleColor
+                    },
+                    animationSpec = tween(140),
+                    label = "alphabetLetterColor"
                 )
-            }
-        }
-
-        active?.let { target ->
-            Surface(
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .padding(end = 38.dp),
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.primary
-            ) {
-                Text(
-                    target.letter,
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
+                val background by animateColorAsState(
+                    targetValue = if (selected) activeColor else androidx.compose.ui.graphics.Color.Transparent,
+                    animationSpec = tween(160),
+                    label = "alphabetLetterBackground"
                 )
+                val scale by animateFloatAsState(
+                    targetValue = if (selected) 1.35f else 1f,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessLow
+                    ),
+                    label = "alphabetLetterScale"
+                )
+                Box(
+                    Modifier
+                        .size(18.dp)
+                        .graphicsLayer {
+                            scaleX = scale
+                            scaleY = scale
+                        }
+                        .background(background, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        target.letter,
+                        fontSize = if (letters.size > 20) 8.sp else 9.sp,
+                        color = color,
+                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+                    )
+                }
             }
         }
     }

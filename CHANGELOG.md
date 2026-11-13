@@ -4,6 +4,15 @@ All notable changes to this project are documented here. This project follows [S
 
 ## [Unreleased]
 
+## [0.2.5] - 2026-11-14
+
+### Added
+
+- The app-menu alphabet index is available on both the left and right edges, so it can be used with either hand.
+- The letter for the current list section stays highlighted while scrolling, not only while scrubbing.
+- Animated letter highlight, haptic ticks while scrubbing, a spring/fade letter bubble, and animated jumps when tapping a letter.
+- The index bars no longer overlap app labels: the list reserves space at both edges.
+
 ## [0.2.4] - 2026-11-14
 
 ### Added

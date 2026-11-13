@@ -77,7 +77,7 @@ Launches use `LauncherApps.startMainActivity(..., userHandle, ...)`, so a clone 
 
 ## App list index
 
-`AllAppsScreen` builds a flat list of typed entries (section header, letter header, app, folder, folder child). Letter headers carry their list index, so the overlay index bar can call `LazyListState.scrollToItem` directly. The bar handles tap and drag through a single `awaitEachGesture` loop, shows a floating letter bubble, and is hidden while searching or when there are fewer than three letter sections.
+`AllAppsScreen` builds a flat list of typed entries (section header, letter header, app, folder, folder child). Letter headers carry their list index, so the overlay index bar can call `LazyListState.scrollToItem` directly. The bar appears on both edges, highlights the section containing the first visible item, and handles tap and drag through a single `awaitEachGesture` loop. Dragging updates sections immediately with haptic ticks and a spring letter bubble; tapping animates to the section. The index is hidden while searching or when there are fewer than three letter sections, and the list reserves horizontal space so labels are never covered.
 
 ## Design constraints
 

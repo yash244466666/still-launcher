@@ -6,7 +6,7 @@ This file is the project handbook for Claude Code and other AI coding agents. Re
 
 Still Launcher is an independent, GPL-3.0, text-first Android home-screen replacement focused on digital wellbeing. It is a single-activity Jetpack Compose app with no backend, no account, no analytics and **no `INTERNET` permission**.
 
-Current release line: **0.2.4**. State: buildable, lint-clean, 17/17 JVM tests, and smoke-tested on an Android 15 (API 35) emulator. It has not been tested on physical devices.
+Current release line: **0.2.5**. State: buildable, lint-clean, 17/17 JVM tests, and smoke-tested on an Android 15 (API 35) emulator. It has not been tested on physical devices.
 
 The project is a clean-room implementation of an idea. Never copy source code, strings, drawables, icons or branding from another launcher.
 
