@@ -17,3 +17,6 @@ release.jks
 .claude/settings.local.json
 .claude/*.lock
 .claude/scheduled_tasks.lock
+/fdroid/config.yml
+/fdroid/repo/
+*.p12

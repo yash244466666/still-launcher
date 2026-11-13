@@ -1,0 +1,33 @@
+Categories:
+  - Launcher
+  - System
+License: GPL-3.0-or-later
+AuthorName: Still Launcher contributors
+WebSite: https://github.com/yash244466666/still-launcher
+SourceCode: https://github.com/yash244466666/still-launcher
+IssueTracker: https://github.com/yash244466666/still-launcher/issues
+Changelog: https://github.com/yash244466666/still-launcher/blob/main/CHANGELOG.md
+AutoName: Still Launcher
+Summary: A text-first launcher for digital wellbeing
+Description: |-
+  Still Launcher replaces the home-screen icon grid with a short list of names,
+  a clock and a small set of tools you switch on deliberately.
+
+  Features include an alphabetical app list with a drag/tap index bar, a Recent
+  apps section, favourites and folders, timed app blocking, recurring focus
+  schedules, daily app limits, a home-screen background-app shortcut, screen-time
+  statistics, themes and gesture settings.
+
+  Optional focus tools use Android's usage-access, accessibility and notification
+  access. All data stays on the device. The app has no INTERNET permission, no
+  accounts, no ads and no analytics.
+
+  Accessibility is used only to detect the current foreground app and optional
+  short-video view IDs. Notification access is used only for the local allow-list
+  filter. Per-app grayscale additionally requires a one-time adb grant of
+  WRITE_SECURE_SETTINGS and is entirely optional.
+
+  This repository is an independent clean-room project. It is not affiliated
+  with, endorsed by or derived from any commercial launcher.
+RepoType: git
+Repo: https://github.com/yash244466666/still-launcher.git

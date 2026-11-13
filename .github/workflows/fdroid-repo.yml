@@ -1,0 +1,174 @@
+name: F-Droid repo
+
+on:
+  workflow_dispatch:
+  release:
+    types: [ published ]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fdroid-repo
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    name: Build and publish self-hosted F-Droid repo
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools build-tools;36.0.0'
+
+      - name: Install fdroidserver
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade fdroidserver
+          fdroid --version
+
+      - name: Determine release tag
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "release" ]; then
+            TAG="${{ github.event.release.tag_name }}"
+          else
+            TAG="$(gh release list --repo "$GITHUB_REPOSITORY" --exclude-pre-releases --limit 1 --json tagName --jq '.[0].tagName')"
+          fi
+          if [ -z "$TAG" ] || [ "$TAG" = "null" ]; then
+            echo "::error::No stable release found"
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Download release APK
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p fdroid/repo
+          gh release download "${{ steps.release.outputs.tag }}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --pattern 'still-launcher-*-release.apk' \
+            --dir fdroid/repo
+          ls -lh fdroid/repo
+
+      - name: Decode repository signing keystore
+        shell: bash
+        env:
+          KEYSTORE_BASE64: ${{ secrets.FDROID_REPO_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.FDROID_REPO_KEYSTORE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$KEYSTORE_PASSWORD" ]; then
+            echo "::error::FDROID_REPO_KEYSTORE_BASE64 and FDROID_REPO_KEYSTORE_PASSWORD are required."
+            exit 1
+          fi
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/fdroid-repo.p12"
+          test -s "$RUNNER_TEMP/fdroid-repo.p12"
+
+      - name: Write temporary fdroid config
+        shell: bash
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.FDROID_REPO_KEYSTORE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          cat > fdroid/config.yml <<EOF
+          repo_url: https://yash244466666.github.io/still-launcher/repo
+          repo_name: Still Launcher
+          repo_description: Signed releases of Still Launcher, an open-source text-first launcher for digital wellbeing.
+          archive_older: 0
+          keystore: $RUNNER_TEMP/fdroid-repo.p12
+          keystorepass: $KEYSTORE_PASSWORD
+          keypass: $KEYSTORE_PASSWORD
+          repo_keyalias: stilllauncher-repo
+          keydname: CN=Still Launcher F-Droid Repo, OU=Open Source, O=Still Launcher, C=BD
+          sdk_path: $SDK
+          EOF
+
+      - name: Build repository index
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd fdroid
+          fdroid update --verbose
+          test -f repo/index-v1.jar
+          test -f repo/index-v2.json
+
+      - name: Compute repository fingerprint
+        id: fingerprint
+        shell: bash
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.FDROID_REPO_KEYSTORE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          FP="$(keytool -list -v -keystore "$RUNNER_TEMP/fdroid-repo.p12" \
+            -storepass "$KEYSTORE_PASSWORD" -alias stilllauncher-repo \
+            | grep 'SHA256:' | head -1 | sed 's/.*SHA256: //')"
+          if [ -z "$FP" ]; then
+            echo "::error::Could not read repository certificate fingerprint"
+            exit 1
+          fi
+          echo "fingerprint=$FP" >> "$GITHUB_OUTPUT"
+          echo "$FP" > fdroid/repo/fingerprint.txt
+
+      - name: Prepare GitHub Pages content
+        shell: bash
+        env:
+          FP: ${{ steps.fingerprint.outputs.fingerprint }}
+          TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          set -euo pipefail
+          mkdir -p public/repo
+          cp -a fdroid/repo/. public/repo/
+          cat > public/index.html <<EOF
+          <!doctype html>
+          <html lang="en">
+          <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>Still Launcher F-Droid repository</title>
+          <style>body{font:16px/1.5 system-ui,sans-serif;max-width:42rem;margin:3rem auto;padding:0 1rem}code{background:#eee;padding:.15rem .35rem;border-radius:.3rem}</style>
+          </head>
+          <body>
+          <h1>Still Launcher — F-Droid repository</h1>
+          <p>Add this repository to F-Droid:</p>
+          <p><code>https://yash244466666.github.io/still-launcher/repo/</code></p>
+          <p>Repository fingerprint:</p>
+          <p><code>$FP</code></p>
+          <p>Version indexed: <code>$TAG</code></p>
+          <p>This is a self-hosted repository serving signed release APKs. Android 13+ may still require
+          <em>App info → ⋮ → Allow restricted settings</em> before accessibility or notification access can be enabled.</p>
+          <p><a href="https://github.com/yash244466666/still-launcher">Source code</a></p>
+          </body></html>
+          EOF
+          touch public/.nojekyll
+          echo "### F-Droid repository" >> "$GITHUB_STEP_SUMMARY"
+          echo "- URL: https://yash244466666.github.io/still-launcher/repo/" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Fingerprint: $FP" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Release: $TAG" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publish to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: public
+          publish_branch: gh-pages
+          force_orphan: true
+          user_name: github-actions[bot]
+          user_email: 41898282+github-actions[bot]@users.noreply.github.com

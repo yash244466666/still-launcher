@@ -1,0 +1,12 @@
+# Template only. The F-Droid workflow generates the real config.yml in the runner.
+# Never commit a filled-in config.yml or a keystore.
+repo_url: https://yash244466666.github.io/still-launcher/repo
+repo_name: Still Launcher
+repo_description: Signed releases of Still Launcher, an open-source text-first launcher for digital wellbeing.
+archive_older: 0
+keystore: /path/to/fdroid-repo.p12
+keystorepass: CHANGE_ME
+keypass: CHANGE_ME
+repo_keyalias: stilllauncher-repo
+keydname: CN=Still Launcher F-Droid Repo, OU=Open Source, O=Still Launcher, C=BD
+sdk_path: /path/to/android-sdk

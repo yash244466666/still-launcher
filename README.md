@@ -48,6 +48,15 @@ Android 13+ blocks these permissions for apps installed outside an app store unt
 
 The same guidance, with direct buttons to the relevant settings, is built into the app under **Settings → Install & access help**.
 
+### F-Droid test repository
+
+A self-hosted F-Droid repository is available while official F-Droid inclusion is prepared:
+
+- URL: `https://yash244466666.github.io/still-launcher/repo/`
+- Fingerprint: `8C:16:3E:E1:19:37:A6:58:F9:65:07:57:0F:E0:23:98:3A:EC:32:16:26:6D:88:05:F7:C3:3C:82:D3:0F:A1:7D`
+
+Install [F-Droid](https://f-droid.org/F-Droid.apk), open **Settings → Repositories → Add repository**, paste the URL and fingerprint, then search for **Still Launcher**. This avoids the Play Protect install block and gives F-Droid-managed updates. It does **not** bypass Android's restricted-settings protection for accessibility; that step remains.
+
 ---
 
 ## Why this exists
