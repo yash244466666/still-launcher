@@ -7,8 +7,8 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization")
 }
 
-val appVersionName = providers.gradleProperty("versionName").orNull ?: "0.1.0"
-val appVersionCode = providers.gradleProperty("versionCode").orNull?.toIntOrNull() ?: 1
+val appVersionName = providers.gradleProperty("versionName").orNull ?: "0.2.0"
+val appVersionCode = providers.gradleProperty("versionCode").orNull?.toIntOrNull() ?: 2
 val signingKeystore = System.getenv("SIGNING_KEYSTORE_PATH")
 
 android {

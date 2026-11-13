@@ -25,6 +25,7 @@ NotificationFilterService (NotificationListenerService)
 All persistent state lives in a single Preferences DataStore (`still_settings`). Scalars use primitive preference keys; collections are JSON-encoded with kotlinx.serialization:
 
 - `favorites`, `hidden`, `folders`, `renamed`
+- `recentApps` (`RecentApp`: package + last-used epoch millis, capped at eight)
 - `blocked` (`BlockedApp`: package + epoch millis)
 - `schedules` (`BlockSchedule`: days, start/end minute, packages, enabled)
 - `limits` (`AppLimit`: minutes, behaviour, last reminder, cooldown)
@@ -49,6 +50,8 @@ The engine checks, in order:
 
 A match launches `BlockedActivity` or `ReminderActivity` with the reason and end time. Both are `exported="false"`, excluded from recents and single-task. `SYSTEM_ALERT_WINDOW` is requested because Android otherwise restricts background activity launches; the accessibility service is also a system-bound service exempt from those restrictions on most builds.
 
+Every launchable foreground package is also recorded in the local recent list (`RecentApp`, capped at eight). The home screen shows the newest entry as a background-app indicator, and the app list renders the newest five in a Recent apps section. Tapping the indicator launches the package, which brings its existing task forward when the app allows it. The **Recents** shortcut uses the accessibility service's `GLOBAL_ACTION_RECENTS` to open Android's own minimised-app screen.
+
 Monochrome is applied on the same transition:
 
 ```kotlin
@@ -65,6 +68,10 @@ It is cleared on screen-off and when leaving the selected app. This path needs `
 ## Screen time
 
 `UsageRepository.usageBetween` reconstructs foreground intervals from `UsageEvents`: `ACTIVITY_RESUMED` opens an interval, `ACTIVITY_PAUSED`/`ACTIVITY_STOPPED` closes it, and intervals still open at the query end are counted up to that moment. This avoids the coarser aggregates in `UsageStats` and works for arbitrary ranges.
+
+## App list index
+
+`AllAppsScreen` builds a flat list of typed entries (section header, letter header, app, folder, folder child). Letter headers carry their list index, so the overlay index bar can call `LazyListState.scrollToItem` directly. The bar handles tap and drag through a single `awaitEachGesture` loop, shows a floating letter bubble, and is hidden while searching or when there are fewer than three letter sections.
 
 ## Design constraints
 

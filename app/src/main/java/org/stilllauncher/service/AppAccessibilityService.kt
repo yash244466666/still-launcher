@@ -55,5 +55,8 @@ class AppAccessibilityService : AccessibilityService() {
 
         fun lockScreen(): Boolean =
             instance?.performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN) ?: false
+
+        fun openRecents(): Boolean =
+            instance?.performGlobalAction(GLOBAL_ACTION_RECENTS) ?: false
     }
 }

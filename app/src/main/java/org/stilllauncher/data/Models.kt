@@ -73,6 +73,25 @@ data class AppFolder(
     val packages: List<String> = emptyList()
 )
 
+@Serializable
+data class RecentApp(
+    val packageName: String,
+    val lastUsed: Long
+)
+
+/**
+ * Moves [packageName] to the front of the recent list, removes older entries
+ * for the same package and keeps at most [max] entries.
+ */
+fun addRecentApp(
+    current: List<RecentApp>,
+    packageName: String,
+    now: Long,
+    max: Int = 8
+): List<RecentApp> =
+    (listOf(RecentApp(packageName, now)) + current.filterNot { it.packageName == packageName })
+        .take(max)
+
 data class LauncherApp(
     val packageName: String,
     val activityName: String,
@@ -97,6 +116,7 @@ data class Settings(
     val favorites: List<String> = emptyList(),
     val hidden: List<String> = emptyList(),
     val folders: List<AppFolder> = emptyList(),
+    val recentApps: List<RecentApp> = emptyList(),
     val renamed: Map<String, String> = emptyMap(),
     val blocked: List<BlockedApp> = emptyList(),
     val schedules: List<BlockSchedule> = emptyList(),

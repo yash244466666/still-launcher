@@ -8,6 +8,7 @@ import org.stilllauncher.data.ReminderBehavior
 import org.stilllauncher.data.Settings
 import org.stilllauncher.data.SettingsStore
 import org.stilllauncher.data.UsageRepository
+import org.stilllauncher.data.addRecentApp
 import org.stilllauncher.ui.BlockedActivity
 import org.stilllauncher.ui.ReminderActivity
 
@@ -28,6 +29,8 @@ object MonitorEngine {
 
     private var lastActionPackage: String? = null
     private var lastActionAt = 0L
+    private var lastRecordedPackage: String? = null
+    private var lastRecordedAt = 0L
 
     fun attach(store: SettingsStore, scope: CoroutineScope) {
         this.store = store
@@ -48,6 +51,7 @@ object MonitorEngine {
         if (pkg == "android") return
 
         val now = System.currentTimeMillis()
+        recordRecent(context, pkg, now)
 
         val direct = directBlock(pkg, now)
         if (direct != null) {
@@ -99,6 +103,24 @@ object MonitorEngine {
             persistLimits(updated)
             launchReminder(context, pkg, used, limit.minutes, limit.behavior)
         }
+    }
+
+    private fun recordRecent(context: Context, pkg: String, now: Long) {
+        if (pkg == lastRecordedPackage && now - lastRecordedAt < 10 * 60_000L) return
+        val launchable = runCatching {
+            context.packageManager.getLaunchIntentForPackage(pkg) != null
+        }.getOrDefault(false)
+        if (!launchable) return
+
+        lastRecordedPackage = pkg
+        lastRecordedAt = now
+        val updated = addRecentApp(settings.recentApps, pkg, now)
+        if (updated == settings.recentApps) return
+        settings = settings.copy(recentApps = updated)
+
+        val s = store ?: return
+        val sc = scope ?: return
+        sc.launch(kotlinx.coroutines.Dispatchers.IO) { s.setRecentApps(updated) }
     }
 
     fun interruptShortVideo(context: Context, packageName: String) {

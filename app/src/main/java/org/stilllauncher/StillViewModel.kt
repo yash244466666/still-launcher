@@ -225,6 +225,8 @@ class StillViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setNotificationAllowed(value: Set<String>) = write { this.setNotificationAllowed(value) }
 
+    fun clearRecentApps() = write { this.setRecentApps(emptyList()) }
+
     private fun current(): Settings = settings.value ?: Settings()
 
     private fun write(block: suspend SettingsStore.() -> Unit) {

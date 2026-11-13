@@ -37,6 +37,7 @@ private object K {
     val favorites = stringPreferencesKey("favorites_json")
     val hidden = stringPreferencesKey("hidden_json")
     val folders = stringPreferencesKey("folders_json")
+    val recentApps = stringPreferencesKey("recent_apps_json")
     val renamed = stringPreferencesKey("renamed_json")
     val blocked = stringPreferencesKey("blocked_json")
     val schedules = stringPreferencesKey("schedules_json")
@@ -83,6 +84,7 @@ class SettingsStore private constructor(context: Context) {
                 favorites = decode(p[K.favorites], emptyList<String>()),
                 hidden = decode(p[K.hidden], emptyList<String>()),
                 folders = decode(p[K.folders], emptyList<AppFolder>()),
+                recentApps = decode(p[K.recentApps], emptyList<RecentApp>()),
                 renamed = decode(p[K.renamed], emptyMap<String, String>()),
                 blocked = decode(p[K.blocked], emptyList<BlockedApp>()),
                 schedules = decode(p[K.schedules], emptyList<BlockSchedule>()),
@@ -124,6 +126,9 @@ class SettingsStore private constructor(context: Context) {
 
     suspend fun setFolders(value: List<AppFolder>) =
         edit { it[K.folders] = json.encodeToString(value) }
+
+    suspend fun setRecentApps(value: List<RecentApp>) =
+        edit { it[K.recentApps] = json.encodeToString(value) }
 
     suspend fun setRenamed(value: Map<String, String>) =
         edit { it[K.renamed] = json.encodeToString(value) }

@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import org.stilllauncher.BuildConfig
 import org.stilllauncher.StillViewModel
 import org.stilllauncher.data.Settings
 import org.stilllauncher.util.Formats
@@ -48,6 +49,7 @@ fun SettingsScreen(
 ) {
     val context = LocalContext.current
     var refresh by remember { mutableStateOf(0) }
+    var clearRecents by remember { mutableStateOf(false) }
 
     ScreenScaffold(
         title = "Settings",
@@ -105,6 +107,11 @@ fun SettingsScreen(
                 subtitle = "${settings.hidden.size} hidden",
                 onClick = { onNavigate(Route.HiddenApps) }
             )
+            SettingRow(
+                "Recent apps",
+                subtitle = "${settings.recentApps.size} remembered",
+                onClick = { clearRecents = true }
+            )
 
             SectionLabel("Focus")
             SettingRow(
@@ -147,11 +154,22 @@ fun SettingsScreen(
             SectionLabel("About")
             SettingRow(
                 "About Still Launcher",
-                subtitle = "Open source · version 0.1.0",
+                subtitle = "Open source · version ${BuildConfig.VERSION_NAME}",
                 onClick = { onNavigate(Route.About) }
             )
             Spacer(Modifier.height(30.dp))
         }
+    }
+
+    if (clearRecents) {
+        ConfirmDialog(
+            title = "Clear recent apps?",
+            message = "This only removes the local history used for the recent-app shortcut. It does not affect the apps themselves.",
+            confirmLabel = "Clear",
+            destructive = true,
+            onDismiss = { clearRecents = false },
+            onConfirm = { viewModel.clearRecentApps() }
+        )
     }
 }
 
@@ -352,7 +370,7 @@ fun AboutScreen(onBack: () -> Unit) {
         ) {
             Spacer(Modifier.height(16.dp))
             Text("Still Launcher", style = MaterialTheme.typography.titleLarge)
-            Text("Version 0.1.0", style = MaterialTheme.typography.bodyMedium,
+            Text("Version ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(20.dp))
             Text(

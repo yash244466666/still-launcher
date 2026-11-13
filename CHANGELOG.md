@@ -4,6 +4,21 @@ All notable changes to this project are documented here. This project follows [S
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-13
+
+### Added
+
+- Alphabetic index bar in the app menu: drag or tap a letter to jump to that section.
+- Recent apps section at the top of the app menu, kept locally and capped at eight entries.
+- Background-app indicator on the home screen showing the last app that was in the foreground, with a one-tap **Return** action.
+- **Recents** shortcut on the home screen to open Android's minimised-app screen (requires the accessibility service).
+- **Settings → Home screen → Recent apps** to clear the local recent history.
+
+### Changed
+
+- The app list now uses a stable shared row model so sections, folders and the index bar stay in sync.
+- Version defaults to 0.2.0 (versionCode 2); release version values still come from the tag.
+
 ## [0.1.0] - 2026-11-13
 
 ### Added

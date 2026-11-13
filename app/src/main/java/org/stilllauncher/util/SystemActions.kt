@@ -28,4 +28,6 @@ object SystemActions {
     }
 
     fun lockScreen(): Boolean = AppAccessibilityService.lockScreen()
+
+    fun openRecents(): Boolean = AppAccessibilityService.openRecents()
 }

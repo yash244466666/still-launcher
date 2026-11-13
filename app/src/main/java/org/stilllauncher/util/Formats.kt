@@ -60,6 +60,19 @@ object Formats {
     fun clock(minutesOfDay: Int): String =
         "%02d:%02d".format(Locale.US, minutesOfDay / 60, minutesOfDay % 60)
 
+    fun ago(millis: Long, now: Long = System.currentTimeMillis()): String {
+        val delta = (now - millis).coerceAtLeast(0L)
+        val minutes = delta / 60_000L
+        val hours = minutes / 60
+        val days = hours / 24
+        return when {
+            minutes < 1 -> "just now"
+            minutes < 60 -> "$minutes min ago"
+            hours < 24 -> "$hours h ago"
+            else -> "$days d ago"
+        }
+    }
+
     fun relativeUntil(untilMillis: Long, now: Long = System.currentTimeMillis()): String {
         val remaining = abs(untilMillis - now)
         val minutes = remaining / 60_000L
