@@ -246,6 +246,14 @@ af841912594162f29ea85a12b2bb8347c016a938fb31ccfa0fdc4e3812c35def
 
 Battery optimisation is opened through the system list, not requested directly. Do not reintroduce `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`.
 
+### Self-hosted F-Droid test repository
+
+- URL: `https://yash244466666.github.io/still-launcher/repo/`
+- Fingerprint: `8C:16:3E:E1:19:37:A6:58:F9:65:07:57:0F:E0:23:98:3A:EC:32:16:26:6D:88:05:F7:C3:3C:82:D3:0F:A1:7D`
+- Workflow: `.github/workflows/fdroid-repo.yml`; it indexes the newest stable GitHub release with `fdroidserver`, signs the index with a separate repository key stored only in Actions secrets, and publishes to `gh-pages`.
+
+The metadata lives in `fdroid/metadata/`. The generated `fdroid/config.yml` and `fdroid/repo/` are git-ignored. Official F-Droid submission is a separate step: it requires adding a `Builds:` recipe to the metadata and opening a merge request in `fdroiddata` with a GitLab account. Official F-Droid builds are signed by F-Droid, so they are not update-compatible with the GitHub/self-hosted APK.
+
 ## Release and signing
 
 Releases are created by pushing a semantic-version tag:

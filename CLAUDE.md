@@ -209,6 +209,7 @@ Releases are tag-driven and must stay signed with the same key:
 6. Watch the run (`gh run list`, `gh run watch <id> --exit-status`) and verify the release assets. Do not call a release done until the workflow is green.
 7. Every main push also updates the rolling `latest` prerelease with a **signed, non-debuggable release APK**. Never publish debug APKs to users: `application-debuggable` and the Android debug certificate are a common Play Protect trigger.
 8. When users report Play Protect warnings or greyed-out accessibility, point them to `Settings → Install & access help` and the README installation section. Android 13+ requires **Allow restricted settings** in the app-info menu for sideloaded accessibility/notification access; this cannot be bypassed from inside the app.
+9. The `F-Droid repo` workflow indexes every stable release into a self-hosted repository at `https://yash244466666.github.io/still-launcher/repo/`. The repo fingerprint is `8C:16:3E:…:A1:7D` (full value in `fdroid/README.md`). Do not rotate the repo key casually; users add the fingerprint once. The official F-Droid submission is a separate, later step and requires a GitLab merge request.
 
 Required repository secrets: `SIGNING_KEYSTORE_BASE64`, `SIGNING_KEYSTORE_PASSWORD`, `SIGNING_KEY_ALIAS`, `SIGNING_KEY_PASSWORD`. The keystore is never committed. Losing it prevents update-compatible releases under `org.stilllauncher`.
 
