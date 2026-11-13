@@ -17,9 +17,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -28,9 +31,18 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Clear
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -48,6 +60,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
@@ -67,7 +80,12 @@ private sealed interface ListEntry {
     val id: String
 }
 
-private data class HeaderEntry(val title: String, override val id: String) : ListEntry
+private data class HeaderEntry(
+    val title: String,
+    override val id: String,
+    val description: String? = null,
+    val icon: ImageVector? = null
+) : ListEntry
 
 private data class LetterEntry(val letter: String) : ListEntry {
     override val id: String = "letter-$letter"
@@ -135,15 +153,36 @@ fun AllAppsScreen(
     val entries = buildList {
         if (query.isBlank()) {
             if (recentApps.isNotEmpty()) {
-                add(HeaderEntry("Recent apps", "header-recent"))
+                add(
+                    HeaderEntry(
+                        "Recent apps",
+                        "header-recent",
+                        "Apps you used recently",
+                        StillIcons.History
+                    )
+                )
                 recentApps.forEach { add(AppEntryItem(it, "recent-${it.profileKey}")) }
             }
             if (favoriteApps.isNotEmpty()) {
-                add(HeaderEntry("Favourites", "header-favourites"))
+                add(
+                    HeaderEntry(
+                        "Favourites",
+                        "header-favourites",
+                        "${favoriteApps.size} app${if (favoriteApps.size == 1) "" else "s"} on your home screen",
+                        Icons.Outlined.Star
+                    )
+                )
                 favoriteApps.forEach { add(AppEntryItem(it, "fav-${it.profileKey}")) }
             }
             if (settings.folders.isNotEmpty()) {
-                add(HeaderEntry("Folders", "header-folders"))
+                add(
+                    HeaderEntry(
+                        "Folders",
+                        "header-folders",
+                        "${settings.folders.size} folder${if (settings.folders.size == 1) "" else "s"}",
+                        StillIcons.Folder
+                    )
+                )
                 settings.folders.forEach { folder ->
                     add(FolderEntry(folder, folder.name in expandedFolders))
                     if (folder.name in expandedFolders) {
@@ -156,7 +195,14 @@ fun AllAppsScreen(
                 }
             }
             if (rest.isNotEmpty()) {
-                add(HeaderEntry("All apps", "header-all"))
+                add(
+                    HeaderEntry(
+                        "All apps",
+                        "header-all",
+                        "${rest.size} app${if (rest.size == 1) "" else "s"} · A to Z",
+                        StillIcons.Grid
+                    )
+                )
                 grouped.forEach { (letter, list) ->
                     add(LetterEntry(letter))
                     list.forEach { add(AppEntryItem(it, "all-${it.profileKey}")) }
@@ -191,23 +237,53 @@ fun AllAppsScreen(
             value = query,
             onValueChange = { query = it },
             placeholder = { Text("Search apps") },
+            leadingIcon = {
+                Icon(Icons.Outlined.Search, contentDescription = null)
+            },
+            trailingIcon = {
+                if (query.isNotEmpty()) {
+                    IconButton(onClick = { query = "" }) {
+                        Icon(Icons.Outlined.Clear, contentDescription = "Clear search")
+                    }
+                }
+            },
             singleLine = true,
+            shape = RoundedCornerShape(16.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+            ),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp)
                 .focusRequester(focusRequester)
         )
+        if (query.isBlank()) {
+            HintRow(
+                icon = Icons.Outlined.Info,
+                text = "Tap to open · long-press for favourite, limits and more"
+            )
+        }
 
         if (query.isNotBlank()) {
             LazyColumn(Modifier.weight(1f).fillMaxWidth()) {
                 if (filtered.isEmpty()) {
-                    item { EmptyHint("No apps match \"$query\"") }
+                    item {
+                        EmptyState(
+                            icon = Icons.Outlined.Search,
+                            title = "No apps match",
+                            body = "Try a different name, or clear the search to see every app."
+                        )
+                    }
                 } else {
+                    item { Spacer(Modifier.height(4.dp)) }
                     items(filtered, key = { "search-${it.profileKey}" }) { app ->
                         AppRow(
                             label = nameOf(app),
                             onClick = { viewModel.launch(app) },
-                            onLongClick = { selected = app }
+                            onLongClick = { selected = app },
+                            showChevron = true
                         )
                     }
                 }
@@ -218,34 +294,53 @@ fun AllAppsScreen(
                     state = listState,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(
-                        start = if (showIndex) 34.dp else 0.dp,
-                        end = if (showIndex) 34.dp else 0.dp,
+                        start = if (showIndex) 36.dp else 0.dp,
+                        end = if (showIndex) 36.dp else 0.dp,
                         bottom = 24.dp
                     )
                 ) {
                     items(entries, key = { it.id }) { entry ->
                         when (entry) {
-                            is HeaderEntry -> SectionLabel(entry.title)
-
-                            is LetterEntry -> Text(
-                                entry.letter,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(start = 20.dp, top = 18.dp, bottom = 4.dp)
+                            is HeaderEntry -> SectionHeader(
+                                entry.title,
+                                entry.description,
+                                entry.icon
                             )
+
+                            is LetterEntry -> Row(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    entry.letter,
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(Modifier.width(10.dp))
+                                HorizontalDivider(
+                                    modifier = Modifier.weight(1f),
+                                    color = MaterialTheme.colorScheme.outlineVariant
+                                )
+                            }
 
                             is AppEntryItem -> AppRow(
                                 label = nameOf(entry.app),
                                 onClick = { viewModel.launch(entry.app) },
-                                onLongClick = { selected = entry.app }
+                                onLongClick = { selected = entry.app },
+                                showChevron = true
                             )
 
                             is FolderEntry -> {
                                 val count = entry.folder.packages.count { pkg ->
                                     visibleApps.any { it.profileKey == pkg }
                                 }
-                                AppRow(
-                                    label = "${entry.folder.name}  ($count)",
+                                FolderRow(
+                                    name = entry.folder.name,
+                                    count = count,
+                                    expanded = entry.expanded,
                                     onClick = {
                                         expandedFolders = if (entry.folder.name in expandedFolders) {
                                             expandedFolders - entry.folder.name
@@ -253,8 +348,7 @@ fun AllAppsScreen(
                                             expandedFolders + entry.folder.name
                                         }
                                     },
-                                    onLongClick = { managedFolder = entry.folder },
-                                    expanded = entry.expanded
+                                    onLongClick = { managedFolder = entry.folder }
                                 )
                             }
 
@@ -262,14 +356,17 @@ fun AllAppsScreen(
                                 label = nameOf(entry.app),
                                 indent = 16,
                                 onClick = { viewModel.launch(entry.app) },
-                                onLongClick = { selected = entry.app }
+                                onLongClick = { selected = entry.app },
+                                showChevron = true
                             )
                         }
                     }
                     if (entries.isEmpty()) {
                         item {
-                            EmptyHint(
-                                "No launchable apps found. Grant the launcher role and check app visibility settings."
+                            EmptyState(
+                                icon = StillIcons.Grid,
+                                title = "No launchable apps found",
+                                body = "Grant the launcher role and check app visibility settings."
                             )
                         }
                     }
@@ -293,7 +390,7 @@ fun AllAppsScreen(
                         modifier = Modifier
                             .align(Alignment.CenterStart)
                             .fillMaxHeight()
-                            .width(30.dp)
+                            .width(32.dp)
                             .padding(vertical = 8.dp)
                     )
                     AlphabetBar(
@@ -312,7 +409,7 @@ fun AllAppsScreen(
                         modifier = Modifier
                             .align(Alignment.CenterEnd)
                             .fillMaxHeight()
-                            .width(30.dp)
+                            .width(32.dp)
                             .padding(vertical = 8.dp)
                     )
                 }
@@ -403,8 +500,8 @@ private fun AlphabetBar(
 
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(15.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f))
             .onSizeChanged { heightPx = it.height.toFloat().coerceAtLeast(1f) }
             .pointerInput(letters) {
                 awaitEachGesture {
@@ -472,7 +569,7 @@ private fun AlphabetBar(
                 )
                 Box(
                     Modifier
-                        .size(18.dp)
+                        .size(20.dp)
                         .graphicsLayer {
                             scaleX = scale
                             scaleY = scale
@@ -482,7 +579,7 @@ private fun AlphabetBar(
                 ) {
                     Text(
                         target.letter,
-                        fontSize = if (letters.size > 20) 8.sp else 9.sp,
+                        fontSize = if (letters.size > 20) 9.sp else 10.sp,
                         color = color,
                         fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
                     )

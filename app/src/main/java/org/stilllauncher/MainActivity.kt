@@ -10,14 +10,17 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.stilllauncher.data.Settings
@@ -46,7 +49,19 @@ class MainActivity : ComponentActivity() {
                 }
             }
             if (current == null) {
-                Box(Modifier.fillMaxSize().background(Color(0xFF0B0B0B)))
+                val dark = isSystemInDarkTheme()
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .background(if (dark) Color(0xFF0B0B0B) else Color(0xFFFFFFFF)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        "Still Launcher",
+                        color = if (dark) Color(0xFFF2F2F2) else Color(0xFF111111),
+                        fontSize = 18.sp
+                    )
+                }
             } else {
                 StillTheme(current) {
                     if (!current.introDone) {

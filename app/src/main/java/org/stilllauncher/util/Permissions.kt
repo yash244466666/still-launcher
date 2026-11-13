@@ -25,7 +25,11 @@ data class PermissionStatus(
     val overlay: Boolean,
     val ignoringBatteryOptimizations: Boolean,
     val secureSettings: Boolean
-)
+) {
+    /** The three access points blocks, limits and the background indicator need. */
+    val essentialsReady: Boolean
+        get() = defaultLauncher && usageAccess && accessibility
+}
 
 object Permissions {
 

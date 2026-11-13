@@ -7,11 +7,11 @@ This file is the entry point for Gemini CLI. It covers the project facts, comman
 Still Launcher is an independent, GPL-3.0, text-first Android launcher for digital wellbeing. It replaces an icon grid with a name list and adds optional focus tools: timed app blocking, schedules, daily limits, per-app grayscale, notification filtering, screen-time statistics, a recents section, an alphabetic index bar and a background-app shortcut.
 
 - Package: `org.stilllauncher`
-- Version line: `0.2.6`
+- Version line: `0.3.0`
 - minSdk 32 / targetSdk 36 / compileSdk 36
 - Kotlin 2.2.21, AGP 8.13.2, Gradle 8.13, JDK 17, Compose BOM 2025.04.01
 - Single-activity Compose; no XML layouts, no Navigation library, no database, no DI framework
-- 14 JVM tests, lint clean, emulator smoke-tested
+- 17 JVM tests, lint clean, emulator smoke-tested
 - Repository: https://github.com/yash244466666/still-launcher
 
 ## Hard constraints
@@ -52,7 +52,7 @@ SIGNING_KEYSTORE_PATH=/path/to/release.jks \
 SIGNING_KEYSTORE_PASSWORD=... \
 SIGNING_KEY_ALIAS=... \
 SIGNING_KEY_PASSWORD=... \
-./gradlew :app:assembleRelease -PversionName=0.2.6
+./gradlew :app:assembleRelease -PversionName=0.3.0
 ```
 
 Never echo secrets. Never commit a keystore or `keystore.properties`.

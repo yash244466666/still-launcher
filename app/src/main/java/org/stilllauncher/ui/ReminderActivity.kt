@@ -5,7 +5,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,8 +15,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -26,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.stilllauncher.data.ReminderBehavior
 import org.stilllauncher.data.Settings
@@ -106,12 +112,29 @@ private fun ReminderContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        Box(
+            Modifier
+                .size(72.dp)
+                .background(
+                    MaterialTheme.colorScheme.primaryContainer,
+                    RoundedCornerShape(23.dp)
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                StillIcons.Timer,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(36.dp)
+            )
+        }
+        Spacer(Modifier.height(18.dp))
         Text(
             "Time to check in",
             style = MaterialTheme.typography.titleLarge,
             textAlign = TextAlign.Center
         )
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(12.dp))
         Text(
             "You have spent ${Formats.duration(usedMillis)} on $label today. Your daily budget is ${Formats.minutesLabel(limitMinutes)}.",
             style = MaterialTheme.typography.bodyLarge,
@@ -119,7 +142,11 @@ private fun ReminderContent(
             textAlign = TextAlign.Center
         )
         Spacer(Modifier.height(30.dp))
-        Button(onClick = onLeave, modifier = Modifier.fillMaxWidth()) {
+        Button(
+            onClick = onLeave,
+            shape = RoundedCornerShape(16.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
             Text("Leave the app")
         }
         Spacer(Modifier.height(8.dp))

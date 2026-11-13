@@ -3,6 +3,7 @@ package org.stilllauncher.ui
 import android.content.ClipData
 import android.content.ClipboardManager
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,9 +11,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -20,7 +25,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.stilllauncher.util.Permissions
 import org.stilllauncher.util.signingCertificateSha256
 
@@ -35,32 +42,43 @@ fun InstallHelpScreen(onBack: () -> Unit) {
     val fingerprint = remember { signingCertificateSha256(context) }
     var copied by remember { mutableStateOf(false) }
 
-    ScreenScaffold(title = "Install & access help", onBack = onBack) {
+    ScreenScaffold(
+        title = "Install & access help",
+        onBack = onBack,
+        subtitle = "Play Protect, restricted settings and verification"
+    ) {
         Column(
             Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(bottom = 30.dp)
         ) {
-            SectionLabel("Play Protect says the app may be unsafe")
+            SectionHeader(
+                "Play Protect says the app may be unsafe",
+                "This is a heuristic, not proof of a problem",
+                Icons.Outlined.Warning
+            )
             HelpParagraph(
                 "Still Launcher is distributed directly from GitHub, not through Google Play. " +
                     "Play Protect shows a warning for apps from unknown developers, and it is " +
-                    "extra cautious about apps that use accessibility features. The warning is a " +
-                    "heuristic, not proof of a problem."
+                    "extra cautious about apps that use accessibility features."
             )
             HelpParagraph(
                 "Tap \"More details\" and then \"Install anyway\". If no install option appears, " +
                     "install from a computer with adb instead:"
             )
-            HelpCode("adb install -r still-launcher-<version>-release.apk")
+            CodeBlock("adb install -r still-launcher-<version>-release.apk")
             HelpParagraph(
                 "Only install APKs you got from this project's GitHub releases. Verify the " +
                     "SHA-256 sums and the signing fingerprint below. Do not permanently disable " +
                     "Play Protect for apps you do not trust."
             )
 
-            SectionLabel("Accessibility is greyed out or says restricted")
+            SectionHeader(
+                "Accessibility is greyed out or says restricted",
+                "Android 13 and newer protect sideloaded access",
+                Icons.Outlined.Lock
+            )
             HelpParagraph(
                 "Android 13 and newer block accessibility and notification access for apps " +
                     "installed outside an app store until you allow restricted settings. This is " +
@@ -92,53 +110,78 @@ fun InstallHelpScreen(onBack: () -> Unit) {
                     "It does not use restricted settings."
             )
 
-            Column(Modifier.padding(horizontal = 12.dp)) {
-                TextButton(onClick = { Permissions.openAppSettings(context) }) {
-                    Text("Open app info (for “Allow restricted settings”)")
-                }
-                TextButton(onClick = { Permissions.openAccessibility(context) }) {
-                    Text("Open accessibility settings")
-                }
-                TextButton(onClick = { Permissions.openNotificationListener(context) }) {
-                    Text("Open notification access")
-                }
-                TextButton(onClick = { Permissions.openUsageAccess(context) }) {
-                    Text("Open usage access")
-                }
+            Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                SecondaryButton(
+                    text = "Open app info",
+                    onClick = { Permissions.openAppSettings(context) },
+                    icon = Icons.Outlined.Info
+                )
+                Spacer(Modifier.height(8.dp))
+                SecondaryButton(
+                    text = "Open accessibility settings",
+                    onClick = { Permissions.openAccessibility(context) },
+                    icon = Icons.Outlined.Lock
+                )
+                Spacer(Modifier.height(8.dp))
+                SecondaryButton(
+                    text = "Open notification access",
+                    onClick = { Permissions.openNotificationListener(context) },
+                    icon = Icons.Outlined.Warning
+                )
+                Spacer(Modifier.height(8.dp))
+                SecondaryButton(
+                    text = "Open usage access",
+                    onClick = { Permissions.openUsageAccess(context) },
+                    icon = StillIcons.Chart
+                )
             }
 
-            SectionLabel("Verify this build")
+            SectionHeader(
+                "Verify this build",
+                "Compare this fingerprint with the published one",
+                Icons.Outlined.CheckCircle
+            )
             HelpParagraph(
                 "The signing certificate below belongs to this installed build. Official " +
                     "release builds are signed with the certificate published in the README. " +
                     "Debug builds show a different certificate."
             )
-            Text(
-                fingerprint ?: "Fingerprint unavailable",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(horizontal = 20.dp)
-            )
-            TextButton(
-                onClick = {
-                    val clipboard = context.getSystemService(ClipboardManager::class.java)
-                    clipboard?.setPrimaryClip(
-                        ClipData.newPlainText("certificate SHA-256", fingerprint ?: "")
+            SettingsCard {
+                Column(Modifier.padding(14.dp)) {
+                    Text(
+                        fingerprint ?: "Fingerprint unavailable",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 12.sp
+                        ),
+                        color = MaterialTheme.colorScheme.primary
                     )
-                    copied = true
-                },
-                enabled = fingerprint != null
-            ) {
-                Text(if (copied) "Copied" else "Copy fingerprint")
+                    Spacer(Modifier.height(8.dp))
+                    SecondaryButton(
+                        text = if (copied) "Copied" else "Copy fingerprint",
+                        onClick = {
+                            val clipboard = context.getSystemService(ClipboardManager::class.java)
+                            clipboard?.setPrimaryClip(
+                                ClipData.newPlainText("certificate SHA-256", fingerprint ?: "")
+                            )
+                            copied = true
+                        },
+                        icon = Icons.Outlined.CheckCircle
+                    )
+                }
             }
 
-            SectionLabel("Why these permissions?")
+            SectionHeader(
+                "Why these permissions?",
+                "Each one is optional and revocable",
+                Icons.Outlined.Info
+            )
             HelpBullet("Usage access — detects the app you just left so blocking, limits, recents and screen time work.")
-            HelpBullet("Accessibility — immediate foreground detection, Recents shortcut and the optional short-video guard. It does not read screen content for storage or upload.")
+            HelpBullet("Accessibility — immediate foreground detection, the Recents shortcut and the optional short-video guard. It does not read screen content for storage or upload.")
             HelpBullet("Notification access — the optional allow-list that filters distracting notifications.")
             HelpBullet("Display over other apps — lets the block or reminder screen appear over a blocked app on modern Android.")
             HelpBullet("Secure settings (adb only) — optional per-app grayscale. Not required for anything else.")
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(16.dp))
             Text(
                 "Every permission is optional and can be revoked at any time. Revoking access stops " +
                     "the feature that depends on it; it does not damage the app or your data.",
@@ -162,13 +205,13 @@ private fun HelpParagraph(text: String) {
 
 @Composable
 private fun HelpStep(number: String, text: String) {
-    androidx.compose.foundation.layout.Row(
+    Row(
         Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 6.dp)
     ) {
         Text(
-            number + ".",
+            "$number.",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(end = 10.dp)
@@ -183,7 +226,7 @@ private fun HelpStep(number: String, text: String) {
 
 @Composable
 private fun HelpBullet(text: String) {
-    androidx.compose.foundation.layout.Row(
+    Row(
         Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 4.dp)
@@ -195,14 +238,4 @@ private fun HelpBullet(text: String) {
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
-}
-
-@Composable
-private fun HelpCode(text: String) {
-    Text(
-        text,
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
-    )
 }

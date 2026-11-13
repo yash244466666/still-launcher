@@ -6,7 +6,7 @@ This file is the project handbook for Claude Code and other AI coding agents. Re
 
 Still Launcher is an independent, GPL-3.0, text-first Android home-screen replacement focused on digital wellbeing. It is a single-activity Jetpack Compose app with no backend, no account, no analytics and **no `INTERNET` permission**.
 
-Current release line: **0.2.6**. State: buildable, lint-clean, 17/17 JVM tests, and smoke-tested on an Android 15 (API 35) emulator. It has not been tested on physical devices.
+Current release line: **0.3.0**. State: buildable, lint-clean, 17/17 JVM tests, and smoke-tested on an Android 15 (API 35) emulator. It has not been tested on physical devices.
 
 The project is a clean-room implementation of an idea. Never copy source code, strings, drawables, icons or branding from another launcher.
 
@@ -28,7 +28,7 @@ Requirements: JDK 17, Android SDK platform 36, build-tools 36.
 git clone https://github.com/yash244466666/still-launcher.git
 cd still-launcher
 echo "sdk.dir=$ANDROID_HOME" > local.properties
-./gradlew :app:testDebugUnitTest     # 14 JVM tests
+./gradlew :app:testDebugUnitTest     # 17 JVM tests
 ./gradlew :app:lintDebug             # must stay green
 ./gradlew :app:assembleDebug         # app/build/outputs/apk/debug/app-debug.apk
 ```
@@ -176,6 +176,18 @@ The 2026 AndroidX line requires AGP 9.1 and compileSdk 37. Dependabot is configu
 - Palette and typography live in `ui/theme/Theme.kt`.
 - Do not set an explicit text colour inside `Typography`; it overrides Material button content colours and made button labels invisible once. Use `Surface(contentColor=...)`.
 - System bar appearance is set in `MainActivity.ApplySystemBarAppearance`.
+
+### UI conventions (0.3 design system)
+
+Version 0.3.0 replaced the original bare text rows with a card-based design system. Keep new screens consistent with it:
+
+- `ScreenScaffold` supplies the header, back button and optional trailing action. `SectionHeader` + `SettingsCard` group related settings.
+- Use `NavRow` for navigation, `ToggleRow` or `AppToggleRow` for switches, and `ChoiceRow` for radio-style options. Every tappable row must have an icon tile, a label and a visible affordance (chevron or switch). Do not add bare `TextButton` rows.
+- Use `PrimaryButton` for the main action on an editor, `SecondaryButton` for a supporting action, and `AddButton` in a screen header.
+- Use `EmptyState` with an action whenever a list is empty, `InfoCard` for explanations, `StatusPill` for state, and `AppMonogram` for app identity.
+- Cards use `surfaceContainer`; dividers use `outlineVariant`; the accent is `colorScheme.primary`. Never hard-code colours outside `Theme.kt`.
+- Use `StillIcons` for concepts missing from `material-icons-core`, keeping paths on a 24×24 grid.
+- Touch targets stay at least 48 dp. Text labels must remain readable with the largest in-app font size.
 
 ## 8. Verification protocol
 

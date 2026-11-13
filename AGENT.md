@@ -11,12 +11,12 @@ It is an **independent clean-room project**. There is no affiliation with, endor
 ## Facts you can rely on
 
 - Package: `org.stilllauncher`
-- Current line: `0.2.6`
+- Current line: `0.3.0`
 - minSdk 32, targetSdk 36, compileSdk 36
 - Kotlin 2.2.21, AGP 8.13.2, Gradle 8.13, JDK 17, Compose BOM 2025.04.01
 - Single activity, Jetpack Compose, no XML layouts, no Navigation library
 - Preferences DataStore + kotlinx.serialization, no database, no dependency injection
-- 14 JVM unit tests, Android lint clean
+- 17 JVM unit tests, Android lint clean
 - Public repo: https://github.com/yash244466666/still-launcher
 - Releases are signed, tag-driven; every main push refreshes a rolling `latest` prerelease
 
@@ -263,9 +263,9 @@ The metadata lives in `fdroid/metadata/`. The generated `fdroid/config.yml` and 
 Releases are created by pushing a semantic-version tag:
 
 ```bash
-git tag v0.2.6
+git tag v0.3.0
 git push origin main
-git push origin v0.2.6
+git push origin v0.3.0
 ```
 
 The Release workflow:

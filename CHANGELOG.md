@@ -4,6 +4,27 @@ All notable changes to this project are documented here. This project follows [S
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-14
+
+### Changed
+
+- Redesigned the interface around labelled cards, icons, section headers and obvious actions. Switches, buttons and tappable rows are now visually distinct instead of plain text.
+- Settings is grouped into Focus tools, Home screen, and Setup & help, with a setup card that shows whether the three essentials are ready.
+- Permissions shows a progress summary and gives every permission an icon, a plain-language purpose and a visible status pill; missing essentials say “Needed”.
+- Long-pressing an app now opens a bottom sheet with a three-column action grid: Open, Favourite, Daily limit, Block, Move to folder, Rename, Hide, App info and Uninstall.
+- Onboarding ends with a three-step access checklist, and the Home screen, app list and every empty screen now tell the user what to do next and offer the action inline.
+- Added a calm accent colour derived from the chosen theme, a live theme preview, font/size preview, date/time preview, app letter badges, a labelled Home dock and clearer alphabet index bars.
+- Daily-limit editor now has +/− steppers, quick budget choices and a cleaner slider; schedules and limits explain themselves before the first item exists.
+- Added `StillIcons` for concepts not covered by Material's core icon set and documented the shared UI conventions for future changes.
+
+### Fixed
+
+- Gesturing Home while already on the Home screen no longer leaves a blank wallpaper-only screen. The launcher is still excluded from Recents, but the auto-remove flag and empty task affinity that could destroy the home task are gone.
+- Cold start now shows a brief branded loading state instead of a black window while settings load.
+- Screen-time bars no longer turn red for the most-used app; red is reserved for a limit that is actually over budget.
+- Package labels that PackageManager hides now fall back through LauncherApps, and sub-minute usage reads “<1 m” instead of “0 m”.
+- Notification-access warnings now use the same warning styling as other attention states.
+
 ## [0.2.6] - 2026-11-14
 
 ### Fixed

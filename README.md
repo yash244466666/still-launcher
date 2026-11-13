@@ -8,7 +8,7 @@ A text-first Android launcher for digital wellbeing, built as an independent ope
 
 Still Launcher replaces the home-screen icon grid with a short list of names, then adds optional focus tools: timed app blocks, day/time schedules, daily app budgets, per-app grayscale, notification filtering, and screen-time statistics. There is no account, no advertising, and no analytics SDK.
 
-> **Status:** 0.2.6. Built, unit-tested (17/17) and smoke-tested on an Android 15 (API 35) emulator. Not yet tested on physical devices. See [Limitations](#limitations).
+> **Status:** 0.3.0. Built, unit-tested (17/17) and smoke-tested on an Android 15 (API 35) emulator. Not yet tested on physical devices. See [Limitations](#limitations).
 
 ---
 
@@ -71,8 +71,8 @@ This is an independent clean-room project. **No source code, assets, strings, ic
 
 | Area | What works |
 |---|---|
-| Home screen | Clock + date circle with battery arc, background-app indicator with one-tap return, Recents shortcut, favourites as plain text, phone shortcut, all-apps and settings entry points |
-| App list | Alphabetical text list with letter headers, two-sided drag/tap alphabetic index bars with a live current-section highlight, dual/cloned apps from all Android profiles, a Recent apps section, search, favourites, folders, hide/rename/move/unhide, app info, uninstall |
+| Home screen | Clock + date circle with battery arc, a labelled icon dock, background-app card with one-tap return, Recents shortcut, favourites with letter badges and a guided empty state |
+| App list | Letter-badge rows with a clear search field, a long-press hint and a two-sided drag/tap alphabetic index with a live current-section highlight; dual/cloned apps from all Android profiles, a Recent apps section, favourites, folders, hide/rename/move/unhide, app info, uninstall |
 | App blocking | Block any app for 1 h – 30 days; full-screen block screen with countdown and an explicit “end block early” escape |
 | Schedules | Recurring day/time windows that block a chosen set of apps; overnight windows supported |
 | Daily limits | Per-app daily budget; choose remind / exit / 15-minute cooldown behaviour; live usage display |
@@ -80,14 +80,14 @@ This is an independent clean-room project. **No source code, assets, strings, ic
 | Notification filter | Allow-list of apps that may post; disallowed notifications are cancelled and listed in-app |
 | Short-video guard | Optional accessibility probe that interrupts YouTube Shorts, Instagram Reels and Snapchat Spotlight while scrolling (experimental; app updates can change the probes) |
 | Screen time | Today / week / month per-app usage reconstructed from UsageStats events |
-| Appearance | System / black / white / E-Ink / custom background, four font families, seven text sizes, date/time formats |
+| Appearance | System / black / white / E-Ink / custom background, four font families, nine text sizes, date/time formats |
 | Gestures | Swipe up for search, swipe down for notification shade, double-tap to lock |
 
 ## Screenshots
 
-| Home (dark) | App list | Blocked |
+| Home | App list | Settings |
 |---|---|---|
-| ![Home](docs/screenshots/home-dark.png) | ![App list](docs/screenshots/apps.png) | ![Blocked](docs/screenshots/blocked.png) |
+| ![Home screen](docs/screenshots/home.png) | ![App list](docs/screenshots/apps.png) | ![Settings](docs/screenshots/settings.png) |
 
 ---
 
@@ -100,8 +100,8 @@ This is an independent clean-room project. **No source code, assets, strings, ic
 To cut a release:
 
 ```bash
-git tag v0.2.0
-git push origin v0.2.0
+git tag v0.3.0
+git push origin v0.3.0
 ```
 
 Or run the **Release** workflow manually with a version number.

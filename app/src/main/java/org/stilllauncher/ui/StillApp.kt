@@ -132,6 +132,7 @@ fun StillApp(viewModel: StillViewModel, settings: Settings, homeRequest: Int) {
         )
 
         is Route.ScreenTime -> ScreenTimeScreen(
+            viewModel = viewModel,
             settings = settings,
             onBack = pop
         )

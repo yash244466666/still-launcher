@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -24,10 +26,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowForward
+import androidx.compose.material.icons.outlined.Phone
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -40,6 +50,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
@@ -128,9 +139,9 @@ fun HomeScreen(
                 .padding(horizontal = 18.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(Modifier.height(26.dp))
+            Spacer(Modifier.height(22.dp))
             ClockCircle(settings, now, battery)
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(14.dp))
 
             val recent = remember(settings.recentApps, settings.hidden, apps) {
                 settings.recentApps.firstNotNullOfOrNull { rec ->
@@ -139,7 +150,7 @@ fun HomeScreen(
                 }
             }
             recent?.let { (app, rec) ->
-                RecentAppBar(
+                RecentAppCard(
                     label = viewModel.displayName(app),
                     lastUsed = rec.lastUsed,
                     onReturn = { viewModel.launch(app) }
@@ -153,17 +164,19 @@ fun HomeScreen(
                 }
             }
 
-            Box(Modifier.weight(1f).fillMaxWidth()) {
+            Box(
+                Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+            ) {
                 if (favouriteApps.isEmpty()) {
-                    Text(
-                        "Long-press an app in the app list to add it here.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    FavouritesEmpty(
+                        onOpenAllApps = onOpenAllApps,
                         modifier = Modifier.align(Alignment.Center)
                     )
                 } else {
-                    Column(Modifier.fillMaxWidth()) {
-                        favouriteApps.take(11).forEach { app ->
+                    LazyColumn(Modifier.fillMaxSize()) {
+                        items(favouriteApps.take(11), key = { it.profileKey }) { app ->
                             AppRow(
                                 label = viewModel.displayName(app),
                                 onClick = { viewModel.launch(app) },
@@ -174,31 +187,28 @@ fun HomeScreen(
                 }
             }
 
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                TextButton(onClick = {
+            HomeDock(
+                onCall = {
                     runCatching {
-                        context.startActivity(Intent(Intent.ACTION_DIAL).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                        context.startActivity(
+                            Intent(Intent.ACTION_DIAL)
+                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        )
                     }
-                }) { Text("Call") }
-                Row {
-                    TextButton(onClick = {
-                        if (!SystemActions.openRecents()) {
-                            Toast.makeText(
-                                context,
-                                "Enable the focus guard accessibility service to open recents",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    }) { Text("Recents") }
-                    TextButton(onClick = onOpenAllApps) { Text("All apps") }
-                    TextButton(onClick = onOpenSettings) { Text("Settings") }
-                }
-            }
-            Spacer(Modifier.height(6.dp))
+                },
+                onRecents = {
+                    if (!SystemActions.openRecents()) {
+                        Toast.makeText(
+                            context,
+                            "Enable the focus guard accessibility service to open recents",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                },
+                onAllApps = onOpenAllApps,
+                onSettings = onOpenSettings
+            )
+            Spacer(Modifier.height(8.dp))
         }
     }
 
@@ -217,39 +227,172 @@ fun HomeScreen(
 }
 
 @Composable
-private fun RecentAppBar(label: String, lastUsed: Long, onReturn: () -> Unit) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f))
-            .clickable(onClick = onReturn)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
+private fun RecentAppCard(label: String, lastUsed: Long, onReturn: () -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
-        Text(
-            "●",
-            color = MaterialTheme.colorScheme.primary,
-            fontSize = 11.sp
-        )
-        Spacer(Modifier.width(10.dp))
-        Column(Modifier.weight(1f)) {
+        Row(
+            Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            AppMonogram(label, size = 38.dp)
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    label,
+                    style = MaterialTheme.typography.bodyLarge,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    "Background · ${Formats.ago(lastUsed)}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Spacer(Modifier.width(8.dp))
+            FilledTonalButton(
+                onClick = onReturn,
+                shape = RoundedCornerShape(12.dp),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                    horizontal = 12.dp,
+                    vertical = 8.dp
+                )
+            ) {
+                Text("Continue")
+                Spacer(Modifier.width(4.dp))
+                Icon(
+                    Icons.AutoMirrored.Outlined.ArrowForward,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun FavouritesEmpty(onOpenAllApps: () -> Unit, modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    ) {
+        Column(
+            Modifier.padding(22.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Box(
+                Modifier
+                    .size(52.dp)
+                    .clip(RoundedCornerShape(17.dp))
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    StillIcons.Grid,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(26.dp)
+                )
+            }
+            Spacer(Modifier.height(12.dp))
+            Text("Your favourites live here", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(4.dp))
             Text(
-                "In the background · ${Formats.ago(lastUsed)}",
+                "Open All apps, then long-press an app and choose Favourite. It will appear on this screen.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
-            Text(
-                label,
-                style = MaterialTheme.typography.bodyLarge,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+            Spacer(Modifier.height(14.dp))
+            FilledTonalButton(
+                onClick = onOpenAllApps,
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Icon(
+                    StillIcons.Grid,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text("Browse all apps")
+            }
+        }
+    }
+}
+
+@Composable
+private fun HomeDock(
+    onCall: () -> Unit,
+    onRecents: () -> Unit,
+    onAllApps: () -> Unit,
+    onSettings: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    ) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            DockItem(Icons.Outlined.Phone, "Call", onCall)
+            DockItem(StillIcons.History, "Recents", onRecents)
+            DockItem(StillIcons.Grid, "All apps", onAllApps, emphasized = true)
+            DockItem(Icons.Outlined.Settings, "Settings", onSettings)
+        }
+    }
+}
+
+@Composable
+private fun RowScope.DockItem(
+    icon: ImageVector,
+    label: String,
+    onClick: () -> Unit,
+    emphasized: Boolean = false
+) {
+    Column(
+        Modifier
+            .weight(1f)
+            .clip(RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = 6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(
+            Modifier
+                .size(38.dp)
+                .clip(RoundedCornerShape(13.dp))
+                .background(
+                    if (emphasized) MaterialTheme.colorScheme.primary
+                    else androidx.compose.ui.graphics.Color.Transparent
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                icon,
+                contentDescription = label,
+                tint = if (emphasized) MaterialTheme.colorScheme.onPrimary
+                else MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(22.dp)
             )
         }
+        Spacer(Modifier.height(3.dp))
         Text(
-            "Return",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.primary
+            label,
+            style = MaterialTheme.typography.labelMedium,
+            color = if (emphasized) MaterialTheme.colorScheme.primary
+            else MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -257,6 +400,7 @@ private fun RecentAppBar(label: String, lastUsed: Long, onReturn: () -> Unit) {
 @Composable
 private fun ClockCircle(settings: Settings, now: LocalDateTime, battery: Int) {
     val foreground = MaterialTheme.colorScheme.onBackground
+    val accent = MaterialTheme.colorScheme.primary
     Box(Modifier.size(190.dp), contentAlignment = Alignment.Center) {
         Canvas(Modifier.fillMaxSize()) {
             val stroke = 2.dp.toPx()
@@ -266,7 +410,7 @@ private fun ClockCircle(settings: Settings, now: LocalDateTime, battery: Int) {
             )
             if (battery >= 0) {
                 drawArc(
-                    color = foreground,
+                    color = accent,
                     startAngle = -90f,
                     sweepAngle = 360f * (battery / 100f),
                     useCenter = false,

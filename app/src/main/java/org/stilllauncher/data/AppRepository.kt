@@ -95,6 +95,15 @@ class AppRepository(private val context: Context) {
         val pm = context.packageManager
         val info = pm.getApplicationInfo(packageName, 0)
         pm.getApplicationLabel(info).toString()
+    }.recoverCatching {
+        // PackageManager visibility can hide another launcher from us. The
+        // LauncherApps service still knows about launchable packages.
+        val launcherApp = launcherApps?.getApplicationInfo(
+            packageName,
+            0,
+            android.os.Process.myUserHandle()
+        ) ?: throw IllegalStateException("not visible")
+        context.packageManager.getApplicationLabel(launcherApp).toString()
     }.getOrDefault(packageName)
 
     fun launch(app: LauncherApp) {

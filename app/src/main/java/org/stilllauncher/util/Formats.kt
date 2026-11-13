@@ -41,6 +41,7 @@ object Formats {
 
     fun duration(millis: Long): String {
         if (millis <= 0L) return "0 m"
+        if (millis < 60_000L) return "<1 m"
         val totalMinutes = millis / 60_000L
         val hours = totalMinutes / 60
         val minutes = totalMinutes % 60
