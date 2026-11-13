@@ -4,6 +4,12 @@ All notable changes to this project are documented here. This project follows [S
 
 ## [Unreleased]
 
+## [0.2.6] - 2026-11-14
+
+### Fixed
+
+- The launcher task no longer appears as a blank card in Android Recents, including under gesture navigation. The home activity is excluded from Recents and marked auto-remove.
+
 ## [0.2.5] - 2026-11-14
 
 ### Added
