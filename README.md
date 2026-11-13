@@ -1,7 +1,7 @@
 # Still Launcher
 
 [![CI](https://github.com/yash244466666/still-launcher/actions/workflows/ci.yml/badge.svg)](https://github.com/yash244466666/still-launcher/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/yash244466666/still-launcher?include_prereleases&label=release)](https://github.com/yash244466666/still-launcher/releases)
+[![Release](https://img.shields.io/github/v/release/yash244466666/still-launcher?label=release)](https://github.com/yash244466666/still-launcher/releases)
 [![License: GPL v3](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
 
 A text-first Android launcher for digital wellbeing, built as an independent open-source project.

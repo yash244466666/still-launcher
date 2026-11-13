@@ -45,6 +45,15 @@ jobs:
       - name: Assemble debug APK
         run: ./gradlew :app:assembleDebug --no-daemon --console=plain
 
+      - name: Verify offline guarantee
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -R "android.permission.INTERNET" app/src/main; then
+            echo "::error::Still Launcher must never request INTERNET permission."
+            exit 1
+          fi
+
       - name: Upload debug APK
         uses: actions/upload-artifact@v7
         with:
