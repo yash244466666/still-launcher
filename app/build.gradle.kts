@@ -7,8 +7,22 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization")
 }
 
-val appVersionName = providers.gradleProperty("versionName").orNull ?: "0.2.2"
-val appVersionCode = providers.gradleProperty("versionCode").orNull?.toIntOrNull() ?: 4
+/**
+ * Monotonic version code derived from the semantic version, independent of CI
+ * run numbers. 0.2.3 -> 100203, 1.0.0 -> 110000.
+ */
+fun versionCodeFor(versionName: String): Int {
+    val core = versionName.trim().removePrefix("v").substringBefore('-')
+    val parts = core.split('.')
+    val major = parts.getOrNull(0)?.toIntOrNull() ?: 0
+    val minor = parts.getOrNull(1)?.toIntOrNull() ?: 0
+    val patch = parts.getOrNull(2)?.toIntOrNull() ?: 0
+    return 100_000 + major * 10_000 + minor * 100 + patch
+}
+
+val appVersionName = providers.gradleProperty("versionName").orNull ?: "0.2.3"
+val appVersionCode = providers.gradleProperty("versionCode").orNull?.toIntOrNull()
+    ?: versionCodeFor(appVersionName)
 val signingKeystore = System.getenv("SIGNING_KEYSTORE_PATH")
 
 android {

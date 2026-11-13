@@ -4,6 +4,16 @@ All notable changes to this project are documented here. This project follows [S
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-11-14
+
+### Fixed
+
+- Permission status now refreshes automatically every two seconds while the Permissions screen is visible, in addition to resume and manual refresh.
+- Accessibility detection no longer fails early when an OEM does not expose the master secure flag; the manager list is checked first.
+- Usage-access detection falls back to a real usage query when an OEM reports a non-standard app-op mode.
+- Default-launcher detection also uses the system HOME role.
+- Version codes are now derived from the semantic version (0.2.3 -> 100203) instead of CI run numbers, so F-Droid reliably sees every update.
+
 ## [0.2.2] - 2026-11-14
 
 ### Fixed

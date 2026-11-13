@@ -6,7 +6,7 @@ This file is the project handbook for Claude Code and other AI coding agents. Re
 
 Still Launcher is an independent, GPL-3.0, text-first Android home-screen replacement focused on digital wellbeing. It is a single-activity Jetpack Compose app with no backend, no account, no analytics and **no `INTERNET` permission**.
 
-Current release line: **0.2.2**. State: buildable, lint-clean, 14/14 JVM tests, and smoke-tested on an Android 15 (API 35) emulator. It has not been tested on physical devices.
+Current release line: **0.2.3**. State: buildable, lint-clean, 14/14 JVM tests, and smoke-tested on an Android 15 (API 35) emulator. It has not been tested on physical devices.
 
 The project is a clean-room implementation of an idea. Never copy source code, strings, drawables, icons or branding from another launcher.
 
@@ -204,8 +204,8 @@ Releases are tag-driven and must stay signed with the same key:
 1. Update `CHANGELOG.md`, README status/features if needed, and the default `versionName`/`versionCode` in `app/build.gradle.kts`.
 2. Run the full verification protocol.
 3. Commit **without AI attribution**.
-4. `git tag vX.Y.Z && git push origin main && git push origin vX.Y.Z`.
-5. The Release workflow builds `assembleRelease` with `-PversionName=<tag> -PversionCode=<run number>`, signs with repository secrets, verifies the signature, and publishes APK + `SHA256SUMS` + gzipped mapping.
+4. `git tag vX.Y.Z && git push origin main && git push origin vX.Y.Z`. Do not pass `-PversionCode`; Gradle derives a monotonic code from the version name.
+5. The Release workflow builds `assembleRelease` with `-PversionName=<tag>`; Gradle derives `versionCode` from the semantic version (do not use CI run numbers). It signs with repository secrets, verifies the signature, and publishes APK + `SHA256SUMS` + gzipped mapping.
 6. Watch the run (`gh run list`, `gh run watch <id> --exit-status`) and verify the release assets. Do not call a release done until the workflow is green.
 7. Every main push also updates the rolling `latest` prerelease with a **signed, non-debuggable release APK**. Never publish debug APKs to users: `application-debuggable` and the Android debug certificate are a common Play Protect trigger.
 8. When users report Play Protect warnings or greyed-out accessibility, point them to `Settings → Install & access help` and the README installation section. Android 13+ requires **Allow restricted settings** in the app-info menu for sideloaded accessibility/notification access; this cannot be bypassed from inside the app.

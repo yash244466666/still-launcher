@@ -58,9 +58,7 @@ jobs:
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
         run: |
           set -euo pipefail
-          ./gradlew :app:assembleRelease \
-            -PversionCode="${{ github.run_number }}" \
-            --no-daemon --console=plain
+          ./gradlew :app:assembleRelease --no-daemon --console=plain
 
       - name: Prepare assets
         shell: bash

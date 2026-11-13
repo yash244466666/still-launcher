@@ -11,7 +11,7 @@ It is an **independent clean-room project**. There is no affiliation with, endor
 ## Facts you can rely on
 
 - Package: `org.stilllauncher`
-- Current line: `0.2.2`
+- Current line: `0.2.3`
 - minSdk 32, targetSdk 36, compileSdk 36
 - Kotlin 2.2.21, AGP 8.13.2, Gradle 8.13, JDK 17, Compose BOM 2025.04.01
 - Single activity, Jetpack Compose, no XML layouts, no Navigation library
@@ -56,7 +56,7 @@ Requirements: JDK 17, Android SDK platform 36, build-tools 36. Nothing else. The
 | Unit tests | `./gradlew :app:testDebugUnitTest` |
 | Lint | `./gradlew :app:lintDebug` |
 | Debug APK | `./gradlew :app:assembleDebug` |
-| Signed release (local) | `SIGNING_KEYSTORE_PATH=... ./gradlew :app:assembleRelease -PversionName=... -PversionCode=...` |
+| Signed release (local) | `SIGNING_KEYSTORE_PATH=... ./gradlew :app:assembleRelease -PversionName=...` (versionCode is derived) |
 | Clean build | `./gradlew clean :app:assembleDebug` |
 
 APK outputs:
@@ -259,15 +259,15 @@ The metadata lives in `fdroid/metadata/`. The generated `fdroid/config.yml` and 
 Releases are created by pushing a semantic-version tag:
 
 ```bash
-git tag v0.2.2
+git tag v0.2.3
 git push origin main
-git push origin v0.2.2
+git push origin v0.2.3
 ```
 
 The Release workflow:
 
 - runs unit tests,
-- builds `assembleRelease` with versionName from the tag and versionCode from the run number,
+- builds `assembleRelease` with versionName from the tag and a monotonic versionCode derived from the semantic version,
 - signs with four repository secrets (`SIGNING_KEYSTORE_BASE64`, `SIGNING_KEYSTORE_PASSWORD`, `SIGNING_KEY_ALIAS`, `SIGNING_KEY_PASSWORD`),
 - verifies the APK signature,
 - attaches the APK, `SHA256SUMS` and a gzipped R8 mapping,

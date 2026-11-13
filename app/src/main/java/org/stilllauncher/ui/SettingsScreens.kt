@@ -25,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,6 +37,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.delay
 import org.stilllauncher.BuildConfig
 import org.stilllauncher.StillViewModel
 import org.stilllauncher.data.Settings
@@ -54,6 +58,12 @@ fun SettingsScreen(
     var clearRecents by remember { mutableStateOf(false) }
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { refresh++ }
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(2_000)
+            refresh++
+        }
+    }
     val status = remember(refresh) { Permissions.readStatus(context) }
 
     ScreenScaffold(
@@ -411,9 +421,17 @@ fun PermissionsScreen(settings: Settings, onBack: () -> Unit, onOpenHelp: () -> 
         ActivityResultContracts.RequestPermission()
     ) { refresh++ }
 
-    // Re-read after returning from system settings and whenever Refresh is tapped.
+    // Re-read after returning from system settings, when Refresh is tapped, and
+    // continuously while this screen is visible so grants made elsewhere appear.
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { refresh++ }
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(2_000)
+            refresh++
+        }
+    }
     val status = remember(refresh) { Permissions.readStatus(context) }
+    val checkedAt = remember(refresh) { LocalTime.now() }
 
     ScreenScaffold(
         title = "Permissions",
@@ -438,7 +456,17 @@ fun PermissionsScreen(settings: Settings, onBack: () -> Unit, onOpenHelp: () -> 
                 Text("Access greyed out or Play Protect warning? Open help")
             }
             Text(
-                "Status refreshes when you return from system settings. Tap Refresh to re-check immediately.",
+                "Last checked ${checkedAt.format(DateTimeFormatter.ofPattern("HH:mm:ss"))} · " +
+                    "updates automatically every 2 seconds; Refresh re-checks immediately.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
+            )
+            Text(
+                "Detected now: usage ${onOff(status.usageAccess)} · " +
+                    "accessibility ${onOff(status.accessibility)} · " +
+                    "notifications ${onOff(status.notificationListener)} · " +
+                    "overlay ${onOff(status.overlay)}",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
@@ -579,6 +607,8 @@ private fun OptionRow(label: String, selected: Boolean, onClick: () -> Unit) {
         )
     }
 }
+
+private fun onOff(value: Boolean): String = if (value) "on" else "off"
 
 private fun permissionSummary(status: PermissionStatus): String {
     val granted = buildList {

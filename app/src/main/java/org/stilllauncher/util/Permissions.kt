@@ -1,6 +1,8 @@
 package org.stilllauncher.util
 
 import android.Manifest
+import android.app.role.RoleManager
+import android.app.usage.UsageStatsManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -49,6 +51,10 @@ object Permissions {
     }
 
     fun isDefaultLauncher(context: Context): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val roleManager = context.getSystemService(RoleManager::class.java)
+            if (roleManager?.isRoleHeld(RoleManager.ROLE_HOME) == true) return true
+        }
         val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
         val resolved = context.packageManager.resolveActivity(
             intent,
@@ -57,32 +63,46 @@ object Permissions {
         return resolved?.activityInfo?.packageName == context.packageName
     }
 
-    fun hasUsageAccess(context: Context): Boolean = UsageRepository.hasAccess(context)
+    fun hasUsageAccess(context: Context): Boolean {
+        if (UsageRepository.hasAccess(context)) return true
+        // Some OEMs report a non-standard app-op mode. A non-empty usage query
+        // is a practical fallback that only succeeds with access.
+        return runCatching {
+            val manager = context.getSystemService(UsageStatsManager::class.java)
+                ?: return@runCatching false
+            val now = System.currentTimeMillis()
+            manager.queryUsageStats(
+                UsageStatsManager.INTERVAL_DAILY,
+                now - 86_400_000L,
+                now
+            )?.isNotEmpty() == true
+        }.getOrDefault(false)
+    }
 
     fun isAccessibilityEnabled(context: Context): Boolean {
+        val manager = context.getSystemService(AccessibilityManager::class.java)
+        val fromManager = manager?.getEnabledAccessibilityServiceList(
+            android.accessibilityservice.AccessibilityServiceInfo.FEEDBACK_ALL_MASK
+        )?.any {
+            it.resolveInfo?.serviceInfo?.packageName == context.packageName
+        } == true
+        if (fromManager) return true
+
+        // AccessibilityManager can keep a stale list immediately after the user
+        // returns from system settings; read the secure entry as a fallback.
         val resolver = context.contentResolver
-        if (Settings.Secure.getInt(resolver, Settings.Secure.ACCESSIBILITY_ENABLED, 0) != 1) {
-            return false
-        }
-        // Read the secure setting directly first: AccessibilityManager can keep
-        // a stale list immediately after the user returns from system settings.
         val enabledServices = Settings.Secure.getString(
             resolver,
             Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
         ).orEmpty()
-        val matchesSetting = enabledServices.split(':').any { value ->
+        val listed = enabledServices.split(':').any { value ->
             val component = ComponentName.unflattenFromString(value) ?: return@any false
             component.packageName == context.packageName &&
                 component.className == AppAccessibilityService::class.java.name
         }
-        if (matchesSetting) return true
-
-        val manager = context.getSystemService(AccessibilityManager::class.java) ?: return false
-        return manager.getEnabledAccessibilityServiceList(
-            android.accessibilityservice.AccessibilityServiceInfo.FEEDBACK_ALL_MASK
-        ).any {
-            it.resolveInfo?.serviceInfo?.packageName == context.packageName
-        }
+        if (!listed) return false
+        val master = Settings.Secure.getInt(resolver, Settings.Secure.ACCESSIBILITY_ENABLED, 0)
+        return master == 1 || manager?.isEnabled == true
     }
 
     fun isNotificationListenerEnabled(context: Context): Boolean {
