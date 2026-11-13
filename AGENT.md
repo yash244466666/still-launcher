@@ -11,7 +11,7 @@ It is an **independent clean-room project**. There is no affiliation with, endor
 ## Facts you can rely on
 
 - Package: `org.stilllauncher`
-- Current line: `0.2.0`
+- Current line: `0.2.1`
 - minSdk 32, targetSdk 36, compileSdk 36
 - Kotlin 2.2.21, AGP 8.13.2, Gradle 8.13, JDK 17, Compose BOM 2025.04.01
 - Single activity, Jetpack Compose, no XML layouts, no Navigation library
@@ -88,8 +88,10 @@ app/build/outputs/apk/release/app-release.apk
 | `ui/Components.kt` | Shared rows, dialogs, pickers |
 | `ui/FeatureScreens.kt` | Schedules, limits, monochrome, notifications, screen time, hidden apps |
 | `ui/SettingsScreens.kt` | Settings root, theme/font/date/time/gestures/permissions/about |
+| `ui/HelpScreen.kt` | Play Protect and restricted-settings troubleshooting, signing fingerprint |
 | `ui/BlockedActivity.kt` / `ReminderActivity.kt` | Enforcement UI |
 | `ui/theme/Theme.kt` | Palette, typography, surface content colour |
+| `util/AppSigning.kt` | SHA-256 fingerprint of the installed signing certificate |
 | `.github/workflows/` | CI, signed release, rolling latest build |
 | `docs/ARCHITECTURE.md` | Design notes |
 | `.claude/` | Claude Code settings, commands and reviewer subagent |
@@ -225,14 +227,33 @@ Emulator cold boots often show “System UI isn’t responding”. Dismiss it an
 - [ ] Documentation/changelog updated for user-visible changes.
 - [ ] Release, if any: tag pushed, Release workflow green, assets and signature verified.
 
+## Distribution and installation support
+
+Users install this app from GitHub, so two Android behaviours are expected and must be handled in documentation and support:
+
+1. **Play Protect warns about an unknown developer.** A self-signed, self-distributed APK with accessibility features triggers a heuristic warning. It is not a malware verdict. The only true removal is distribution through Play/F-Droid, which is a product decision. Practical rules:
+   - Never publish debug APKs to users. `application-debuggable` and the Android debug certificate are a strong trigger. The rolling `latest` workflow now builds and signs a release APK.
+   - Keep release signing stable and publish `SHA256SUMS` plus the certificate fingerprint.
+   - Tell users: **More details → Install anyway**, or `adb install -r <apk>` from a computer.
+   - Never advise permanently disabling Play Protect.
+2. **Android 13+ restricted settings.** Accessibility and notification access are greyed out for sideloaded apps until the user opens **Settings → Apps → Still Launcher → ⋮ → Allow restricted settings**. The app cannot request this and must not pretend otherwise. The built-in **Settings → Install & access help** screen, the README and the release notes explain the path, including Xiaomi/HyperOS and Samsung variants.
+
+The installed build's certificate fingerprint is shown in the help screen. Official release certificate SHA-256:
+
+```
+af841912594162f29ea85a12b2bb8347c016a938fb31ccfa0fdc4e3812c35def
+```
+
+Battery optimisation is opened through the system list, not requested directly. Do not reintroduce `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`.
+
 ## Release and signing
 
 Releases are created by pushing a semantic-version tag:
 
 ```bash
-git tag v0.2.0
+git tag v0.2.1
 git push origin main
-git push origin v0.2.0
+git push origin v0.2.1
 ```
 
 The Release workflow:
@@ -246,7 +267,7 @@ The Release workflow:
 
 The keystore is never committed. Only the maintainer holds it and its passwords. Do not rotate it casually: Android will not install an update signed by a different key.
 
-Every push to `main` also refreshes the rolling `latest` prerelease with a debug-signed APK (workflow `latest-build.yml`).
+Every push to `main` also refreshes the rolling `latest` prerelease with a **signed, non-debuggable release APK** (workflow `latest-build.yml`). Never publish a debug APK to users: `application-debuggable` and the Android debug certificate are a common Play Protect trigger.
 
 ## Troubleshooting
 
@@ -260,6 +281,9 @@ Every push to `main` also refreshes the rolling `latest` prerelease with a debug
 | Recent apps empty | Monitor service not running, usage access missing, or no launchable app has been foregrounded since install. |
 | `am start` cannot start Blocked/Reminder | They are not exported by design. Use the real enforcement flow. |
 | Emulator “System UI isn’t responding” | Slow cold boot; dismiss and wait. |
+| Play Protect warns or blocks install | Self-distributed release APK with accessibility. Use “Install anyway” or `adb install`; verify checksums. Never ship debug builds. |
+| Accessibility/notification access greyed out | Android 13+ restricted settings: App info → ⋮ → Allow restricted settings. See `ui/HelpScreen.kt`. |
+| Latest build is debuggable | The workflow must use `assembleRelease` with signing secrets, not `assembleDebug`. |
 | Lint fails on StateFlow.value | Collect with `collectAsStateWithLifecycle()` instead. |
 
 ## Handoff checklist

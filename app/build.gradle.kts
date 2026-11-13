@@ -7,8 +7,8 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization")
 }
 
-val appVersionName = providers.gradleProperty("versionName").orNull ?: "0.2.0"
-val appVersionCode = providers.gradleProperty("versionCode").orNull?.toIntOrNull() ?: 2
+val appVersionName = providers.gradleProperty("versionName").orNull ?: "0.2.1"
+val appVersionCode = providers.gradleProperty("versionCode").orNull?.toIntOrNull() ?: 3
 val signingKeystore = System.getenv("SIGNING_KEYSTORE_PATH")
 
 android {
@@ -30,6 +30,8 @@ android {
                 storePassword = System.getenv("SIGNING_KEYSTORE_PASSWORD")
                 keyAlias = System.getenv("SIGNING_KEY_ALIAS")
                 keyPassword = System.getenv("SIGNING_KEY_PASSWORD")
+                enableV2Signing = true
+                enableV3Signing = true
             }
         }
     }

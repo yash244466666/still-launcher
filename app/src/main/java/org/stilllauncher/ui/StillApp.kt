@@ -26,6 +26,7 @@ sealed interface Route {
     data object ScreenTime : Route
     data object HiddenApps : Route
     data object Permissions : Route
+    data object InstallHelp : Route
     data object About : Route
 }
 
@@ -143,8 +144,11 @@ fun StillApp(viewModel: StillViewModel, settings: Settings, homeRequest: Int) {
 
         is Route.Permissions -> PermissionsScreen(
             settings = settings,
-            onBack = pop
+            onBack = pop,
+            onOpenHelp = { push(Route.InstallHelp) }
         )
+
+        is Route.InstallHelp -> InstallHelpScreen(onBack = pop)
 
         is Route.About -> AboutScreen(onBack = pop)
     }

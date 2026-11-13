@@ -70,6 +70,11 @@ fun SettingsScreen(
                 onClick = { onNavigate(Route.Permissions) }
             )
             SettingRow(
+                "Install & access help",
+                subtitle = "Play Protect warnings and restricted settings",
+                onClick = { onNavigate(Route.InstallHelp) }
+            )
+            SettingRow(
                 "Default home app",
                 subtitle = if (Permissions.isDefaultLauncher(context)) "Still Launcher" else "Not selected",
                 onClick = { Permissions.openHomeSettings(context) }
@@ -393,7 +398,7 @@ fun AboutScreen(onBack: () -> Unit) {
 }
 
 @Composable
-fun PermissionsScreen(settings: Settings, onBack: () -> Unit) {
+fun PermissionsScreen(settings: Settings, onBack: () -> Unit, onOpenHelp: () -> Unit) {
     val context = LocalContext.current
     var refresh by remember { mutableStateOf(0) }
     var copied by remember { mutableStateOf(false) }
@@ -420,6 +425,12 @@ fun PermissionsScreen(settings: Settings, onBack: () -> Unit) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp)
             )
+            TextButton(
+                onClick = onOpenHelp,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            ) {
+                Text("Access greyed out or Play Protect warning? Open help")
+            }
 
             PermissionRow(
                 title = "Default home app",

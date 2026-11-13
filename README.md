@@ -8,7 +8,45 @@ A text-first Android launcher for digital wellbeing, built as an independent ope
 
 Still Launcher replaces the home-screen icon grid with a short list of names, then adds optional focus tools: timed app blocks, day/time schedules, daily app budgets, per-app grayscale, notification filtering, and screen-time statistics. There is no account, no advertising, and no analytics SDK.
 
-> **Status:** 0.2.0. Built, unit-tested (14/14) and smoke-tested on an Android 15 (API 35) emulator. Not yet tested on physical devices. See [Limitations](#limitations).
+> **Status:** 0.2.1. Built, unit-tested (14/14) and smoke-tested on an Android 15 (API 35) emulator. Not yet tested on physical devices. See [Limitations](#limitations).
+
+---
+
+## Install on a phone
+
+Download the **signed release APK** from the [latest stable release](https://github.com/yash244466666/still-launcher/releases/latest), not an arbitrary mirror. Release APKs are minified, signed and published with `SHA256SUMS`.
+
+### Play Protect says the app may be unsafe
+
+Still Launcher is self-distributed from GitHub, not Google Play. Android's Play Protect shows an “unknown developer” warning for sideloaded apps and is especially cautious about apps that use accessibility. This is a heuristic, not a malware report.
+
+1. Tap **More details → Install anyway**.
+2. If your phone offers no install option, install from a computer with `adb install -r still-launcher-<version>-release.apk`.
+3. Verify the download before installing:
+
+   ```bash
+   sha256sum -c SHA256SUMS
+   apksigner verify --print-certs still-launcher-<version>-release.apk
+   ```
+
+Official release certificate SHA-256:
+
+```
+af841912594162f29ea85a12b2bb8347c016a938fb31ccfa0fdc4e3812c35def
+```
+
+Do not permanently disable Play Protect for apps you do not trust.
+
+### Accessibility or notification access is greyed out
+
+Android 13+ blocks these permissions for apps installed outside an app store until you allow restricted settings:
+
+1. Open **Settings → Apps → Still Launcher** (Xiaomi/HyperOS: **Apps → Manage apps → Still Launcher**; Samsung: **Apps → Still Launcher**).
+2. Tap the **⋮** menu on the app-info page and choose **Allow restricted settings**. If the option is missing, first try to enable the service or notification access; Android refuses once and then exposes the menu item. Return to app info and try again.
+3. Return to **Accessibility** and enable **Still Launcher focus guard**. For notifications, use **Settings → Notifications → Device & app notifications**, or **Special app access → Notification access**.
+4. Usage access lives under **Settings → Apps → Special app access → Usage access** and does not use restricted settings.
+
+The same guidance, with direct buttons to the relevant settings, is built into the app under **Settings → Install & access help**.
 
 ---
 
@@ -47,7 +85,7 @@ This is an independent clean-room project. **No source code, assets, strings, ic
 ## Releases
 
 - **Tagged releases** (`v*`) are built, signed, checksummed and published by [`.github/workflows/release.yml`](.github/workflows/release.yml).
-- **Every push to `main`** refreshes a rolling prerelease called [Latest build](https://github.com/yash244466666/still-launcher/releases/tag/latest) with a freshly built debug APK and SHA-256 sums.
+- **Every push to `main`** refreshes a rolling prerelease called [Latest build](https://github.com/yash244466666/still-launcher/releases/tag/latest) with a signed, non-debuggable release APK and SHA-256 sums.
 - Pull requests and `main` run tests, lint and a debug build in [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
 To cut a release:
@@ -61,7 +99,7 @@ Or run the **Release** workflow manually with a version number.
 
 ### Release signing
 
-The release workflow expects four repository secrets: `SIGNING_KEYSTORE_BASE64`, `SIGNING_KEYSTORE_PASSWORD`, `SIGNING_KEY_ALIAS`, `SIGNING_KEY_PASSWORD`. Generate a keystore once and keep a secure backup; Android will not install an update signed by a different key.
+The release and latest-build workflows expect four repository secrets: `SIGNING_KEYSTORE_BASE64`, `SIGNING_KEYSTORE_PASSWORD`, `SIGNING_KEY_ALIAS`, `SIGNING_KEY_PASSWORD`. Generate a keystore once and keep a secure backup; Android will not install an update signed by a different key. Forks must configure the same secrets or the latest-build workflow fails by design instead of publishing a debug APK.
 
 ```bash
 keytool -genkeypair -v -keystore release.jks -alias stilllauncher \
@@ -116,7 +154,9 @@ Nothing is enforced with device-owner or kiosk APIs; force-stopping the app or r
 | `WRITE_SECURE_SETTINGS` | per-app grayscale only | optional, adb only |
 | `RECEIVE_BOOT_COMPLETED` | restore the guard after reboot | optional |
 
-`QUERY_ALL_PACKAGES` is **not** used. App visibility comes from a `<queries>` MAIN/LAUNCHER intent, which is the least-privilege way to build a launcher.
+`QUERY_ALL_PACKAGES` is **not** used. App visibility comes from a `<queries>` MAIN/LAUNCHER intent, which is the least-privilege way to build a launcher. Battery optimisation is opened through the system list; the app does not declare `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`.
+
+On Android 13+, accessibility and notification access may require **Allow restricted settings** in the app-info menu. See [Install on a phone](#install-on-a-phone) or the built-in **Settings → Install & access help**.
 
 ### Grayscale grant
 
@@ -161,6 +201,7 @@ Smoke-tested on the `yash_tools_api35_test` Android 15 emulator:
 - monochrome: `accessibility_display_daltonizer_enabled` toggles 1→0 and value 0→-1 when entering/leaving the selected app
 - notification filter: a shell notification was cancelled and recorded as `com.android.shell`
 - swipe up (app list) and swipe down (notification shade)
+- install & access help screen; the release APK is non-debuggable, APK Signature Scheme v3, and its runtime certificate fingerprint matches the published value
 - black theme, including white system-bar icons; Home intent resets navigation to the launcher screen
 
 Not exercised at runtime: the reminder activity, schedule enforcement at the exact wall-clock window, short-video probes (need real YouTube/Instagram/Snapchat UIs).
@@ -169,6 +210,7 @@ Not exercised at runtime: the reminder activity, schedule enforcement at the exa
 
 - Tested on an emulator; not yet exercised on a physical device in this workspace.
 - Android does not expose a global “currently running apps” list. The home indicator shows the most recent app that came to the foreground; it is a resume shortcut, not a live process monitor.
+- Play Protect warnings and Android 13+ restricted settings are OS behaviours that cannot be removed by the app. The release APK is non-debuggable and signed, and the in-app help explains the exact bypass paths. Distribution through Google Play or F-Droid is the only way to remove the unknown-developer warning entirely.
 - The **Recents** shortcut uses the accessibility service's global action. Without that service it shows a hint instead.
 - Pinned to AGP 8.13 and compileSdk 36. The 2026 AndroidX line requires AGP 9.1 and compileSdk 37; that migration is deliberately separate from the 0.1.x line.
 - Grayscale depends on OEM support for the daltonizer secure setting.

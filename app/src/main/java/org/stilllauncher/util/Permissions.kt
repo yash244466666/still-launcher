@@ -1,6 +1,5 @@
 package org.stilllauncher.util
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -79,12 +78,12 @@ object Permissions {
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
     }
 
-    @SuppressLint("BatteryLife")
     fun openBatteryOptimization(context: Context) {
+        // Open the system list instead of requesting an exemption directly. This
+        // avoids a Play-policy-sensitive permission and keeps the choice with the user.
         safeStart(
             context,
-            Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
-                .setData("package:${context.packageName}".toUri())
+            Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         )
     }

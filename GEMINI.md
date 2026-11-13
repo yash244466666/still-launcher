@@ -7,7 +7,7 @@ This file is the entry point for Gemini CLI. It covers the project facts, comman
 Still Launcher is an independent, GPL-3.0, text-first Android launcher for digital wellbeing. It replaces an icon grid with a name list and adds optional focus tools: timed app blocking, schedules, daily limits, per-app grayscale, notification filtering, screen-time statistics, a recents section, an alphabetic index bar and a background-app shortcut.
 
 - Package: `org.stilllauncher`
-- Version line: `0.2.0`
+- Version line: `0.2.1`
 - minSdk 32 / targetSdk 36 / compileSdk 36
 - Kotlin 2.2.21, AGP 8.13.2, Gradle 8.13, JDK 17, Compose BOM 2025.04.01
 - Single-activity Compose; no XML layouts, no Navigation library, no database, no DI framework
@@ -52,7 +52,7 @@ SIGNING_KEYSTORE_PATH=/path/to/release.jks \
 SIGNING_KEYSTORE_PASSWORD=... \
 SIGNING_KEY_ALIAS=... \
 SIGNING_KEY_PASSWORD=... \
-./gradlew :app:assembleRelease -PversionName=0.2.0 -PversionCode=3
+./gradlew :app:assembleRelease -PversionName=0.2.1 -PversionCode=3
 ```
 
 Never echo secrets. Never commit a keystore or `keystore.properties`.
@@ -83,9 +83,26 @@ app/src/main/java/org/stilllauncher/
   service/NotificationFilterService.kt allow-list filtering
   service/ShortVideoDetector.kt optional Shorts/Reels probes
   ui/                      Compose screens, dialogs, theme
+  ui/HelpScreen.kt         Play Protect and restricted-settings troubleshooting
+  util/AppSigning.kt       installed certificate fingerprint
 ```
 
 Key docs: `docs/ARCHITECTURE.md`, `CLAUDE.md`, `AGENT.md`, `.github/workflows/`.
+
+## Installation support
+
+Users sideload from GitHub, so expect two Android behaviours:
+
+- **Play Protect warning.** Self-distributed, signed APKs with accessibility trigger an “unknown developer” heuristic. Never publish debug APKs; the rolling `latest` workflow must use `assembleRelease` with signing secrets. Tell users to choose **More details → Install anyway** or use `adb install -r <apk>`. Never suggest permanently disabling Play Protect.
+- **Android 13+ restricted settings.** Accessibility and notification access are greyed out until **Settings → Apps → Still Launcher → ⋮ → Allow restricted settings**. The app cannot request this; guide users to it. The built-in **Settings → Install & access help** screen has the exact steps and direct settings buttons.
+
+Official release certificate SHA-256:
+
+```
+af841912594162f29ea85a12b2bb8347c016a938fb31ccfa0fdc4e3812c35def
+```
+
+Battery optimisation opens the system list; do not add `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`.
 
 ## Architecture rules to preserve
 
@@ -193,6 +210,9 @@ Required secrets (maintainer’s repo): `SIGNING_KEYSTORE_BASE64`, `SIGNING_KEYS
 | `am start` cannot start Blocked/Reminder | They are not exported by design. |
 | Lint `StateFlowValueCalledInComposition` | Collect the flow instead of reading `.value`. |
 | Adaptive icon missing | Keep icons in `mipmap-anydpi-v26`; AAPT rejects `<adaptive-icon>` elsewhere. |
+| Play Protect warns/blocks | Self-distributed release APK with accessibility. Install anyway or `adb install`; never publish debug builds. |
+| Accessibility/notification access greyed out | Android 13+ restricted settings: App info → ⋮ → Allow restricted settings. |
+| Latest APK is debuggable | Wrong workflow: build `assembleRelease` with signing secrets, not `assembleDebug`. |
 
 ## Definition of done
 

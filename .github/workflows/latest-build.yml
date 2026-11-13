@@ -36,16 +36,46 @@ jobs:
       - name: Unit tests
         run: ./gradlew :app:testDebugUnitTest --no-daemon --console=plain
 
-      - name: Build debug APK
-        run: ./gradlew :app:assembleDebug --no-daemon --console=plain
+      - name: Decode signing keystore
+        shell: bash
+        env:
+          KEYSTORE_BASE64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error::SIGNING_KEYSTORE_BASE64 is not configured. Latest builds must be signed release APKs, never debug builds."
+            exit 1
+          fi
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.jks"
+          test -s "$RUNNER_TEMP/release.jks"
+
+      - name: Build signed release APK
+        shell: bash
+        env:
+          SIGNING_KEYSTORE_PATH: ${{ runner.temp }}/release.jks
+          SIGNING_KEYSTORE_PASSWORD: ${{ secrets.SIGNING_KEYSTORE_PASSWORD }}
+          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          ./gradlew :app:assembleRelease \
+            -PversionCode="${{ github.run_number }}" \
+            --no-daemon --console=plain
 
       - name: Prepare assets
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p dist
-          cp app/build/outputs/apk/debug/app-debug.apk dist/still-launcher-latest.apk
+          cp app/build/outputs/apk/release/app-release.apk dist/still-launcher-latest.apk
           (cd dist && sha256sum still-launcher-latest.apk > SHA256SUMS)
+          APKSIGNER="$(find "${ANDROID_HOME:-/usr/local/lib/android/sdk}/build-tools" \
+            -name apksigner -type f 2>/dev/null | sort -V | tail -1)"
+          if [ -n "$APKSIGNER" ]; then
+            "$APKSIGNER" verify --print-certs dist/still-launcher-latest.apk
+            "$APKSIGNER" verify --verbose dist/still-launcher-latest.apk \
+              | grep -Eq "Verified using v(2|3) scheme.*true"
+          fi
           cat dist/SHA256SUMS
 
       - name: Update rolling release
@@ -57,15 +87,20 @@ jobs:
           fail_on_unmatched_files: true
           overwrite_files: true
           body: |
-            Automated build from `${{ github.sha }}` on `${{ github.ref_name }}`.
+            Signed release build from `${{ github.sha }}` on `${{ github.ref_name }}`.
 
-            This is a debug-signed development build. For production installs use the latest tagged release.
+            This is a rolling prerelease for testing. It is **not** a debug build.
+            For stable installs use the latest tagged release.
 
-            Install with:
+            If Play Protect warns about an unknown developer, choose **More details → Install anyway**
+            or install from a computer with:
 
             ```bash
             adb install -r still-launcher-latest.apk
             ```
+
+            On Android 13+, if accessibility or notification access is greyed out, open
+            **Settings → Apps → Still Launcher → ⋮ → Allow restricted settings** first.
           files: |
             dist/still-launcher-latest.apk
             dist/SHA256SUMS

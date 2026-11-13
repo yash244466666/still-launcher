@@ -6,7 +6,7 @@ This file is the project handbook for Claude Code and other AI coding agents. Re
 
 Still Launcher is an independent, GPL-3.0, text-first Android home-screen replacement focused on digital wellbeing. It is a single-activity Jetpack Compose app with no backend, no account, no analytics and **no `INTERNET` permission**.
 
-Current release line: **0.2.0**. State: buildable, lint-clean, 14/14 JVM tests, and smoke-tested on an Android 15 (API 35) emulator. It has not been tested on physical devices.
+Current release line: **0.2.1**. State: buildable, lint-clean, 14/14 JVM tests, and smoke-tested on an Android 15 (API 35) emulator. It has not been tested on physical devices.
 
 The project is a clean-room implementation of an idea. Never copy source code, strings, drawables, icons or branding from another launcher.
 
@@ -74,10 +74,11 @@ app/src/main/java/org/stilllauncher/
 │   ├── FeatureScreens.kt        schedules, limits, monochrome, notifications, screen time, hidden
 │   ├── SettingsScreens.kt       settings, theme, font, date/time, gestures, permissions, about
 │   ├── OnboardingScreen.kt      three-page intro
+│   ├── HelpScreen.kt            Play Protect and restricted-settings troubleshooting
 │   ├── BlockedActivity.kt       full-screen block with countdown and early exit
 │   ├── ReminderActivity.kt      daily-limit reminder
 │   └── theme/Theme.kt           palette, typography, Surface content colour
-└── util/                        formats, permissions, system actions, labels
+└── util/                        formats, permissions, system actions, labels, signing fingerprint
 ```
 
 Other important files:
@@ -206,7 +207,8 @@ Releases are tag-driven and must stay signed with the same key:
 4. `git tag vX.Y.Z && git push origin main && git push origin vX.Y.Z`.
 5. The Release workflow builds `assembleRelease` with `-PversionName=<tag> -PversionCode=<run number>`, signs with repository secrets, verifies the signature, and publishes APK + `SHA256SUMS` + gzipped mapping.
 6. Watch the run (`gh run list`, `gh run watch <id> --exit-status`) and verify the release assets. Do not call a release done until the workflow is green.
-7. Every main push also updates the rolling `latest` prerelease with a debug APK.
+7. Every main push also updates the rolling `latest` prerelease with a **signed, non-debuggable release APK**. Never publish debug APKs to users: `application-debuggable` and the Android debug certificate are a common Play Protect trigger.
+8. When users report Play Protect warnings or greyed-out accessibility, point them to `Settings → Install & access help` and the README installation section. Android 13+ requires **Allow restricted settings** in the app-info menu for sideloaded accessibility/notification access; this cannot be bypassed from inside the app.
 
 Required repository secrets: `SIGNING_KEYSTORE_BASE64`, `SIGNING_KEYSTORE_PASSWORD`, `SIGNING_KEY_ALIAS`, `SIGNING_KEY_PASSWORD`. The keystore is never committed. Losing it prevents update-compatible releases under `org.stilllauncher`.
 
@@ -231,6 +233,10 @@ Required repository secrets: `SIGNING_KEYSTORE_BASE64`, `SIGNING_KEYSTORE_PASSWO
 - Emulator cold boots often raise “System UI isn’t responding”; dismiss it and wait. Do not mistake it for an app crash.
 - The dependency stack is pinned because newer AndroidX releases require AGP 9 / compileSdk 37. Check `checkDebugAarMetadata` errors before changing versions.
 - The index bar is a pointer-input overlay. Do not place clickable controls under its 34 dp right edge.
+- Play Protect warnings on self-distributed APKs are expected. The fix is to distribute only signed release builds, never debug APKs; the rolling `latest` workflow now does this. The warning itself cannot be removed without Play distribution.
+- Android 13+ hides accessibility and notification access behind **Allow restricted settings** (App info → ⋮). The app cannot request this; the help screen and README must guide the user. Do not suggest permanently disabling Play Protect.
+- Release signing must include a modern APK Signature Scheme signature. With minSdk 32, AGP produces a v3-only signature; `apksigner verify --verbose` should report v2 or v3 true. CI verifies the release artifacts.
+- Battery optimisation is opened through the system list. Do not reintroduce `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`; it is Play-policy sensitive.
 
 ## 12. Definition of done
 

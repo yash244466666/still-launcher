@@ -4,6 +4,20 @@ All notable changes to this project are documented here. This project follows [S
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-13
+
+### Fixed
+
+- The rolling **Latest build** is now a signed, non-debuggable release APK instead of a debug build. Debug builds were the most likely source of Play Protect warnings.
+- Release signing now explicitly enables APK Signature Scheme v2 and v3.
+- Removed the `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` permission; the app now opens the system battery-optimisation list instead of requesting a direct exemption.
+- Added **Settings → Install & access help** with Play Protect, “Allow restricted settings”, permission paths and the installed certificate fingerprint.
+
+### Added
+
+- Direct buttons to app info, accessibility, notification access and usage access from the help screen.
+- Display and copy of the installed APK signing certificate SHA-256.
+
 ## [0.2.0] - 2026-11-13
 
 ### Added
