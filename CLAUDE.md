@@ -6,7 +6,7 @@ This file is the project handbook for Claude Code and other AI coding agents. Re
 
 Still Launcher is an independent, GPL-3.0, text-first Android home-screen replacement focused on digital wellbeing. It is a single-activity Jetpack Compose app with no backend, no account, no analytics and **no `INTERNET` permission**.
 
-Current release line: **0.3.0**. State: buildable, lint-clean, 17/17 JVM tests, and smoke-tested on an Android 15 (API 35) emulator. It has not been tested on physical devices.
+Current release line: **0.3.0**. State: buildable, lint-clean, 20/20 JVM tests, and smoke-tested on an Android 15 (API 35) emulator. It has not been tested on physical devices.
 
 The project is a clean-room implementation of an idea. Never copy source code, strings, drawables, icons or branding from another launcher.
 
@@ -28,7 +28,7 @@ Requirements: JDK 17, Android SDK platform 36, build-tools 36.
 git clone https://github.com/yash244466666/still-launcher.git
 cd still-launcher
 echo "sdk.dir=$ANDROID_HOME" > local.properties
-./gradlew :app:testDebugUnitTest     # 17 JVM tests
+./gradlew :app:testDebugUnitTest     # 20 JVM tests
 ./gradlew :app:lintDebug             # must stay green
 ./gradlew :app:assembleDebug         # app/build/outputs/apk/debug/app-debug.apk
 ```
@@ -199,7 +199,7 @@ Run before every commit:
 ./gradlew :app:assembleDebug
 ```
 
-Expected: 17/17 tests, lint success, APK at `app/build/outputs/apk/debug/app-debug.apk`.
+Expected: 20/20 tests, lint success, APK at `app/build/outputs/apk/debug/app-debug.apk`.
 
 For UI or enforcement changes, run the emulator smoke test. The AVD used during development is API 35. A minimal check:
 
@@ -258,7 +258,7 @@ Required repository secrets: `SIGNING_KEYSTORE_BASE64`, `SIGNING_KEYSTORE_PASSWO
 ## 12. Definition of done
 
 - [ ] The change is focused and documented.
-- [ ] 17/17 unit tests pass; new logic has tests.
+- [ ] 20/20 unit tests pass; new logic has tests.
 - [ ] Lint is green.
 - [ ] Debug APK builds.
 - [ ] Runtime checks were performed for behaviour changes and reported honestly.

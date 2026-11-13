@@ -11,7 +11,7 @@ Still Launcher is an independent, GPL-3.0, text-first Android launcher for digit
 - minSdk 32 / targetSdk 36 / compileSdk 36
 - Kotlin 2.2.21, AGP 8.13.2, Gradle 8.13, JDK 17, Compose BOM 2025.04.01
 - Single-activity Compose; no XML layouts, no Navigation library, no database, no DI framework
-- 17 JVM tests, lint clean, emulator smoke-tested
+- 20 JVM tests, lint clean, emulator smoke-tested
 - Repository: https://github.com/yash244466666/still-launcher
 
 ## Hard constraints

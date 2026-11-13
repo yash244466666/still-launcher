@@ -16,7 +16,7 @@ It is an **independent clean-room project**. There is no affiliation with, endor
 - Kotlin 2.2.21, AGP 8.13.2, Gradle 8.13, JDK 17, Compose BOM 2025.04.01
 - Single activity, Jetpack Compose, no XML layouts, no Navigation library
 - Preferences DataStore + kotlinx.serialization, no database, no dependency injection
-- 17 JVM unit tests, Android lint clean
+- 20 JVM unit tests, Android lint clean
 - Public repo: https://github.com/yash244466666/still-launcher
 - Releases are signed, tag-driven; every main push refreshes a rolling `latest` prerelease
 
