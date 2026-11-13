@@ -187,6 +187,16 @@ Not exercised at runtime: the reminder activity, schedule enforcement at the exa
 - [Security policy](SECURITY.md)
 - [Code of Conduct](CODE_OF_CONDUCT.md)
 
+### For AI agents
+
+- [CLAUDE.md](CLAUDE.md) — Claude Code handbook: invariants, architecture, recipes, verification, release rules
+- [AGENT.md](AGENT.md) — tool-agnostic agent handbook and full task recipes
+- [GEMINI.md](GEMINI.md) — Gemini CLI entry point
+- [AGENTS.md](AGENTS.md) — pointer for agents that look for the plural filename
+- [.claude/](.claude/) — committed Claude Code settings, `/verify` and `/release` commands, and an Android reviewer subagent
+
+All agents must keep the project offline, original and free of AI/assistant commit attribution.
+
 ## License
 
 GNU General Public License v3.0. See [LICENSE](LICENSE).

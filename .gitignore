@@ -14,3 +14,4 @@ app/build/
 *.keystore
 keystore.properties
 release.jks
+.claude/settings.local.json
