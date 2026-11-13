@@ -167,6 +167,7 @@ Not exercised at runtime: the reminder activity, schedule enforcement at the exa
 ## Limitations
 
 - Tested on an emulator; not yet exercised on a physical device in this workspace.
+- Pinned to AGP 8.13 and compileSdk 36. The 2026 AndroidX line requires AGP 9.1 and compileSdk 37; that migration is deliberately separate from the 0.1.x line.
 - Grayscale depends on OEM support for the daltonizer secure setting.
 - Some OEMs aggressively kill foreground services; battery-optimisation exemption is recommended.
 - Notification filtering may not catch notifications posted while the listener is disconnected.
