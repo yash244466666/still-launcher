@@ -1,0 +1,45 @@
+name: Feature request
+description: Suggest a capability or a better way to do something
+title: "[feature] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Still Launcher tries to stay small. Features that add network access, telemetry or broad new permissions are unlikely to be accepted.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe the situation, not only the proposed control.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: dropdown
+    id: permissions
+    attributes:
+      label: Would this need a new Android permission?
+      options:
+        - "No"
+        - "Not sure"
+        - "Yes (explain below)"
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched existing issues and discussions.
+          required: true
+        - label: This request keeps the app offline and privacy-preserving.
+          required: true

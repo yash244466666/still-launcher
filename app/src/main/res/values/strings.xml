@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Still Launcher</string>
+    <string name="accessibility_label">Still Launcher focus guard</string>
+    <string name="accessibility_description">Lets Still Launcher know which app is in the foreground so it can enforce the app blocks, daily limits and grayscale rules you configure. Everything stays on this device. No screen content is collected or uploaded.</string>
+    <string name="notification_filter_label">Still Launcher notification filter</string>
+    <string name="monitor_channel_name">Focus guard</string>
+    <string name="monitor_channel_description">Keeps app blocking, daily limits and grayscale working.</string>
+    <string name="reminder_channel_name">Time reminders</string>
+    <string name="reminder_channel_description">Shown when you reach a daily app limit.</string>
+    <string name="monitor_notification_text">Focus guard active</string>
+    <string name="monitor_notification_title">Still Launcher</string>
+</resources>

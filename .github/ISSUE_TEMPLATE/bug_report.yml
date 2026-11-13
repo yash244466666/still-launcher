@@ -1,0 +1,64 @@
+name: Bug report
+description: Something is broken or behaves unexpectedly
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Please do not include private app names, notification contents or other personal data.
+  - type: input
+    id: version
+    attributes:
+      label: Still Launcher version
+      description: Shown in Settings > About.
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device and Android version
+      placeholder: "Pixel 8, Android 15 (API 35)"
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Home screen
+        - App list / folders / favourites
+        - App blocking
+        - Schedules
+        - Daily limits
+        - Monochrome mode
+        - Notification filter
+        - Screen time
+        - Theme / font / gestures
+        - Build or CI
+        - Something else
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened?
+      description: Include exact steps and, if possible, a logcat excerpt with personal data removed.
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched existing issues for the same problem.
+          required: true
+        - label: I removed personal or sensitive data from this report.
+          required: true
