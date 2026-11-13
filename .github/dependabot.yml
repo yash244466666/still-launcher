@@ -17,8 +17,12 @@ updates:
     ignore:
       # The 2026 AndroidX line requires AGP 9 and compileSdk 37. Keep the
       # current toolchain stable until that migration is done deliberately.
-      - dependency-name: "androidx.*"
+      - dependency-name: "androidx*"
         update-types: ["version-update:semver-major"]
+      # The 2026 releases above the current pins need compileSdk 37. Ignore
+      # the exact coordinates as well as the glob so grouping cannot bypass it.
+      - dependency-name: "androidx.core:core-ktx"
+      - dependency-name: "androidx.datastore:datastore-preferences"
       - dependency-name: "com.android.tools.build:gradle"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
       - dependency-name: "com.android.application"
