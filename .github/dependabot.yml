@@ -14,6 +14,13 @@ updates:
         patterns:
           - "org.jetbrains.kotlin*"
           - "org.jetbrains.kotlinx*"
+    ignore:
+      # The 2026 AndroidX line requires AGP 9 and compileSdk 37. Keep the
+      # current toolchain stable until that migration is done deliberately.
+      - dependency-name: "androidx.*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "com.android.tools.build:gradle"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
 
   - package-ecosystem: github-actions
     directory: "/"
