@@ -61,6 +61,12 @@ Settings.Secure.putInt(cr, "accessibility_display_daltonizer", on ? 0 : -1)
 
 It is cleared on screen-off and when leaving the selected app. This path needs `WRITE_SECURE_SETTINGS`, which can only be granted from adb.
 
+## Multiple Android profiles
+
+OEM dual apps, parallel apps and work profiles are separate Android users. `AppRepository.loadApps()` enumerates `LauncherApps.getProfiles()` (falling back to `UserManager.userProfiles`) and queries each profile. Every app carries its `UserHandle`, a stable `profileKey` (`package` for the current user, `package#userId` for secondary profiles), and a `(dual app)` suffix for display.
+
+Launches use `LauncherApps.startMainActivity(..., userHandle, ...)`, so a clone opens in the correct profile. Favourites, folders, rename and hide are keyed by `profileKey`; existing main-profile settings remain compatible. Blocks, daily limits, notification filtering and grayscale are deliberately limited to the main profile: foreground monitoring runs in the current user and cannot enforce behaviour in another profile.
+
 ## Notifications
 
 `NotificationFilterService` keeps a live copy of `Settings` from DataStore. When filtering is active and an allow-list is configured, it cancels notifications from packages outside the list (except its own and ongoing/foreground-service notifications) and records a title/text snapshot in an in-memory, 50-item store for the settings screen. With no allow-list, all notifications pass.

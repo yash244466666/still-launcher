@@ -133,23 +133,23 @@ fun HomeScreen(
             Spacer(Modifier.height(16.dp))
 
             val recent = remember(settings.recentApps, settings.hidden, apps) {
-                settings.recentApps.firstOrNull { rec ->
-                    rec.packageName !in settings.hidden &&
-                        apps.any { it.packageName == rec.packageName }
+                settings.recentApps.firstNotNullOfOrNull { rec ->
+                    val app = apps.firstOrNull { it.profileKey == rec.packageName }
+                    if (app != null && rec.packageName !in settings.hidden) app to rec else null
                 }
             }
-            recent?.let { rec ->
+            recent?.let { (app, rec) ->
                 RecentAppBar(
-                    label = viewModel.displayName(rec.packageName),
+                    label = viewModel.displayName(app),
                     lastUsed = rec.lastUsed,
-                    onReturn = { viewModel.launchPackage(rec.packageName) }
+                    onReturn = { viewModel.launch(app) }
                 )
                 Spacer(Modifier.height(10.dp))
             }
 
             val favouriteApps = remember(settings.favorites, apps) {
-                settings.favorites.mapNotNull { pkg ->
-                    apps.firstOrNull { it.packageName == pkg }
+                settings.favorites.mapNotNull { key ->
+                    apps.firstOrNull { it.profileKey == key }
                 }
             }
 
@@ -165,7 +165,7 @@ fun HomeScreen(
                     Column(Modifier.fillMaxWidth()) {
                         favouriteApps.take(11).forEach { app ->
                             AppRow(
-                                label = viewModel.displayName(app.packageName),
+                                label = viewModel.displayName(app),
                                 onClick = { viewModel.launch(app) },
                                 onLongClick = { selected = app }
                             )

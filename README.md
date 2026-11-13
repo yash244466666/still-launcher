@@ -8,7 +8,7 @@ A text-first Android launcher for digital wellbeing, built as an independent ope
 
 Still Launcher replaces the home-screen icon grid with a short list of names, then adds optional focus tools: timed app blocks, day/time schedules, daily app budgets, per-app grayscale, notification filtering, and screen-time statistics. There is no account, no advertising, and no analytics SDK.
 
-> **Status:** 0.2.3. Built, unit-tested (14/14) and smoke-tested on an Android 15 (API 35) emulator. Not yet tested on physical devices. See [Limitations](#limitations).
+> **Status:** 0.2.4. Built, unit-tested (17/17) and smoke-tested on an Android 15 (API 35) emulator. Not yet tested on physical devices. See [Limitations](#limitations).
 
 ---
 
@@ -72,7 +72,7 @@ This is an independent clean-room project. **No source code, assets, strings, ic
 | Area | What works |
 |---|---|
 | Home screen | Clock + date circle with battery arc, background-app indicator with one-tap return, Recents shortcut, favourites as plain text, phone shortcut, all-apps and settings entry points |
-| App list | Alphabetical text list with letter headers, a drag/tap alphabetic index bar, a Recent apps section, search, favourites, folders, hide/rename/move/unhide, app info, uninstall |
+| App list | Alphabetical text list with letter headers, a drag/tap alphabetic index bar, dual/cloned apps from all Android profiles, a Recent apps section, search, favourites, folders, hide/rename/move/unhide, app info, uninstall |
 | App blocking | Block any app for 1 h – 30 days; full-screen block screen with countdown and an explicit “end block early” escape |
 | Schedules | Recurring day/time windows that block a chosen set of apps; overnight windows supported |
 | Daily limits | Per-app daily budget; choose remind / exit / 15-minute cooldown behaviour; live usage display |
@@ -211,6 +211,7 @@ Smoke-tested on the `yash_tools_api35_test` Android 15 emulator:
 - notification filter: a shell notification was cancelled and recorded as `com.android.shell`
 - swipe up (app list) and swipe down (notification shade)
 - install & access help screen; the release APK is non-debuggable, APK Signature Scheme v3, and its runtime certificate fingerprint matches the published value
+- dual-profile apps are listed separately and launched with the correct user handle (verified with a managed-profile Calendar clone; the launcher must be the default home app for Android to expose other profiles)
 - permission status updates automatically every 2 seconds while the Permissions screen is open, on return from system settings, and on Refresh; usage, accessibility, notification and overlay state are re-read each time
 - black theme, including white system-bar icons; Home intent resets navigation to the launcher screen
 
@@ -222,6 +223,7 @@ Not exercised at runtime: the reminder activity, schedule enforcement at the exa
 - Android does not expose a global “currently running apps” list. The home indicator shows the most recent app that came to the foreground; it is a resume shortcut, not a live process monitor.
 - Play Protect warnings and Android 13+ restricted settings are OS behaviours that cannot be removed by the app. The release APK is non-debuggable and signed, and the in-app help explains the exact bypass paths. Distribution through Google Play or F-Droid is the only way to remove the unknown-developer warning entirely.
 - The **Recents** shortcut uses the accessibility service's global action. Without that service it shows a hint instead.
+- Android exposes another profile's launchable apps only to the current/default launcher. If dual apps are missing, set Still Launcher as the default home app. Full secondary users (not profiles) are not visible to normal apps.
 - Pinned to AGP 8.13 and compileSdk 36. The 2026 AndroidX line requires AGP 9.1 and compileSdk 37; that migration is deliberately separate from the 0.1.x line.
 - Grayscale depends on OEM support for the daltonizer secure setting.
 - Some OEMs aggressively kill foreground services; battery-optimisation exemption is recommended.

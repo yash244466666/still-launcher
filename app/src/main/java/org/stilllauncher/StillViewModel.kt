@@ -50,19 +50,30 @@ class StillViewModel(application: Application) : AndroidViewModel(application) {
     fun displayName(packageName: String): String {
         val renamed = settings.value?.renamed?.get(packageName)
         if (!renamed.isNullOrBlank()) return renamed
-        return _apps.value.firstOrNull { it.packageName == packageName }?.label
+        return _apps.value.firstOrNull { it.profileKey == packageName }?.label
             ?: repository.labelFor(packageName)
     }
+
+    fun displayName(app: LauncherApp): String {
+        val renamed = settings.value?.renamed?.get(app.profileKey)
+        val base = if (!renamed.isNullOrBlank()) renamed else app.label
+        return base + app.profileSuffix
+    }
+
+    fun appForKey(profileKey: String): LauncherApp? =
+        _apps.value.firstOrNull { it.profileKey == profileKey }
 
     fun launch(app: LauncherApp) = repository.launch(app)
 
     fun launchPackage(packageName: String) {
-        _apps.value.firstOrNull { it.packageName == packageName }?.let(repository::launch)
+        _apps.value.firstOrNull { it.profileKey == packageName }?.let(repository::launch)
             ?: repository.launchPackage(packageName)
     }
 
     fun openAppInfo(packageName: String) = repository.openAppInfo(packageName)
+    fun openAppInfo(app: LauncherApp) = repository.openAppInfo(app)
     fun uninstall(packageName: String) = repository.uninstall(packageName)
+    fun uninstall(app: LauncherApp) = repository.uninstall(app)
 
     fun toggleFavorite(packageName: String) {
         val s = current()

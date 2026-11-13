@@ -4,6 +4,18 @@ All notable changes to this project are documented here. This project follows [S
 
 ## [Unreleased]
 
+## [0.2.4] - 2026-11-14
+
+### Added
+
+- Apps from every Android launcher profile are listed, so OEM dual apps, parallel apps and work-profile apps appear alongside the main app. Secondary-profile apps are labelled `(dual app)` and launched with their own user handle.
+- Favourites, folders, rename and hide now work per profile using a stable `package#userId` key; existing main-profile entries keep their plain package key.
+- App info opens the correct profile. Blocks and daily limits are restricted to the main profile because cross-profile foreground enforcement is not available from a normal app.
+
+### Changed
+
+- Unit tests now cover profile-key generation.
+
 ## [0.2.3] - 2026-11-14
 
 ### Fixed

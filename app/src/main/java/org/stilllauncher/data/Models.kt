@@ -1,5 +1,7 @@
 package org.stilllauncher.data
 
+import android.os.Process
+import android.os.UserHandle
 import kotlinx.serialization.Serializable
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -96,8 +98,21 @@ data class LauncherApp(
     val packageName: String,
     val activityName: String,
     val label: String,
-    val isSystem: Boolean
-)
+    val isSystem: Boolean,
+    val userHandle: UserHandle = Process.myUserHandle(),
+    val profileKey: String = packageName,
+    val profileSuffix: String = ""
+) {
+    val isCurrentProfile: Boolean get() = userHandle == Process.myUserHandle()
+}
+
+/**
+ * Stable key for preferences and folders. The current profile keeps the plain
+ * package name so existing favourites, folders, blocks and limits migrate
+ * without changes; secondary profiles get a "#userId" suffix.
+ */
+fun profileKeyFor(packageName: String, userId: Int, currentUserId: Int): String =
+    if (userId == currentUserId) packageName else "$packageName#$userId"
 
 data class Settings(
     val introDone: Boolean = false,

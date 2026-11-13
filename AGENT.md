@@ -11,7 +11,7 @@ It is an **independent clean-room project**. There is no affiliation with, endor
 ## Facts you can rely on
 
 - Package: `org.stilllauncher`
-- Current line: `0.2.3`
+- Current line: `0.2.4`
 - minSdk 32, targetSdk 36, compileSdk 36
 - Kotlin 2.2.21, AGP 8.13.2, Gradle 8.13, JDK 17, Compose BOM 2025.04.01
 - Single activity, Jetpack Compose, no XML layouts, no Navigation library
@@ -146,6 +146,10 @@ Accessibility event ─┐
 4. For back behaviour, rely on the stack `pop` and `BackHandler`.
 5. Pressing HOME must reset to Home; keep `homeRequest` wiring intact.
 
+### Multi-profile / dual apps
+
+`AppRepository` enumerates `LauncherApps.getProfiles()`; every `LauncherApp` carries `userHandle`, `profileKey` and `profileSuffix`. The current profile's key is its package name; secondary profiles use `package#userId`. Use the key for favourites, folders, rename and hide, and launch with `LauncherApp.userHandle`. Blocks, limits, notification filtering and grayscale only apply to the main profile. Other profiles are only visible to the default launcher.
+
 ### Add a list section
 
 1. Add a `ListEntry` subtype with a unique, stable `id`.
@@ -259,9 +263,9 @@ The metadata lives in `fdroid/metadata/`. The generated `fdroid/config.yml` and 
 Releases are created by pushing a semantic-version tag:
 
 ```bash
-git tag v0.2.3
+git tag v0.2.4
 git push origin main
-git push origin v0.2.3
+git push origin v0.2.4
 ```
 
 The Release workflow:

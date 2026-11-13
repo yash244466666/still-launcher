@@ -6,7 +6,7 @@ This file is the project handbook for Claude Code and other AI coding agents. Re
 
 Still Launcher is an independent, GPL-3.0, text-first Android home-screen replacement focused on digital wellbeing. It is a single-activity Jetpack Compose app with no backend, no account, no analytics and **no `INTERNET` permission**.
 
-Current release line: **0.2.3**. State: buildable, lint-clean, 14/14 JVM tests, and smoke-tested on an Android 15 (API 35) emulator. It has not been tested on physical devices.
+Current release line: **0.2.4**. State: buildable, lint-clean, 17/17 JVM tests, and smoke-tested on an Android 15 (API 35) emulator. It has not been tested on physical devices.
 
 The project is a clean-room implementation of an idea. Never copy source code, strings, drawables, icons or branding from another launcher.
 
@@ -154,6 +154,10 @@ The 2026 AndroidX line requires AGP 9.1 and compileSdk 37. Dependabot is configu
 - Remember blocked/limit activities are `exported="false"`; test them through the real foreground flow, not `adb am start`.
 - Update the unit tests for schedule logic if time windows change.
 
+### Multi-profile and dual apps
+
+`AppRepository.loadApps()` enumerates `LauncherApps.getProfiles()` and gives every app a `UserHandle`, a stable `profileKey` and a display suffix. The current profile keeps the plain package name as its key; secondary profiles use `package#userId`. Use `profileKey` for favourites, folders, rename and hide, and use the `LauncherApp` overloads of `displayName`, `launch` and `openAppInfo`. Blocks, limits, notification filtering and grayscale are main-profile only because monitoring cannot cross profiles. Android exposes other profiles' launchable apps only to the default launcher, so set Still Launcher as home before testing clones.
+
 ### Change the app list
 
 - Build every row as a `ListEntry` with a unique `id`.
@@ -183,7 +187,7 @@ Run before every commit:
 ./gradlew :app:assembleDebug
 ```
 
-Expected: 14/14 tests, lint success, APK at `app/build/outputs/apk/debug/app-debug.apk`.
+Expected: 17/17 tests, lint success, APK at `app/build/outputs/apk/debug/app-debug.apk`.
 
 For UI or enforcement changes, run the emulator smoke test. The AVD used during development is API 35. A minimal check:
 
@@ -242,7 +246,7 @@ Required repository secrets: `SIGNING_KEYSTORE_BASE64`, `SIGNING_KEYSTORE_PASSWO
 ## 12. Definition of done
 
 - [ ] The change is focused and documented.
-- [ ] 14/14 unit tests pass; new logic has tests.
+- [ ] 17/17 unit tests pass; new logic has tests.
 - [ ] Lint is green.
 - [ ] Debug APK builds.
 - [ ] Runtime checks were performed for behaviour changes and reported honestly.

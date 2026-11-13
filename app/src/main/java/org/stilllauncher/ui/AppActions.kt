@@ -29,8 +29,9 @@ fun AppActionsDialog(
     onSetLimit: (String) -> Unit
 ) {
     var mode by remember { mutableStateOf<String?>(null) }
-    val label = viewModel.displayName(app.packageName)
-    val isFavorite = app.packageName in settings.favorites
+    val label = viewModel.displayName(app)
+    val isFavorite = app.profileKey in settings.favorites
+    val isPrimaryProfile = app.isCurrentProfile
 
     when (mode) {
         null -> AlertDialog(
@@ -38,20 +39,29 @@ fun AppActionsDialog(
             title = { Text(label) },
             text = {
                 Column(Modifier.verticalScroll(rememberScrollState())) {
+                    if (!isPrimaryProfile) {
+                        Text(
+                            "This app is in a secondary Android profile. Blocks and daily limits only work in your main profile.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                     Action("Remove from favourites", enabled = isFavorite) {
-                        viewModel.toggleFavorite(app.packageName)
+                        viewModel.toggleFavorite(app.profileKey)
                         onDismiss()
                     }
                     Action("Add to favourites", enabled = !isFavorite) {
-                        viewModel.toggleFavorite(app.packageName)
+                        viewModel.toggleFavorite(app.profileKey)
                         onDismiss()
                     }
-                    Action("Daily time limit") {
-                        onSetLimit(app.packageName)
-                        onDismiss()
-                    }
-                    Action("Block for a while") {
-                        mode = "block"
+                    if (isPrimaryProfile) {
+                        Action("Daily time limit") {
+                            onSetLimit(app.packageName)
+                            onDismiss()
+                        }
+                        Action("Block for a while") {
+                            mode = "block"
+                        }
                     }
                     Action("Move to folder") {
                         mode = "folder"
@@ -60,16 +70,18 @@ fun AppActionsDialog(
                         mode = "rename"
                     }
                     Action("Hide from app list") {
-                        viewModel.hide(app.packageName)
+                        viewModel.hide(app.profileKey)
                         onDismiss()
                     }
                     Action("App info") {
-                        viewModel.openAppInfo(app.packageName)
+                        viewModel.openAppInfo(app)
                         onDismiss()
                     }
-                    Action("Uninstall", color = MaterialTheme.colorScheme.error) {
-                        viewModel.uninstall(app.packageName)
-                        onDismiss()
+                    if (isPrimaryProfile) {
+                        Action("Uninstall", color = MaterialTheme.colorScheme.error) {
+                            viewModel.uninstall(app)
+                            onDismiss()
+                        }
                     }
                 }
             },
@@ -80,7 +92,7 @@ fun AppActionsDialog(
             appLabel = label,
             onDismiss = onDismiss,
             onSelect = { millis ->
-                viewModel.addBlock(app.packageName, millis)
+                viewModel.addBlock(app.profileKey, millis)
                 onDismiss()
             }
         )
@@ -90,14 +102,14 @@ fun AppActionsDialog(
             initial = label,
             label = "Display name",
             onDismiss = onDismiss,
-            onConfirm = { viewModel.rename(app.packageName, it) }
+            onConfirm = { viewModel.rename(app.profileKey, it) }
         )
 
         "folder" -> FolderPickerDialog(
             folders = settings.folders,
             onDismiss = onDismiss,
             onPick = { folder ->
-                viewModel.moveToFolder(app.packageName, folder.name)
+                viewModel.moveToFolder(app.profileKey, folder.name)
                 onDismiss()
             },
             onNewFolder = {
@@ -111,7 +123,7 @@ fun AppActionsDialog(
             label = "Folder name",
             onDismiss = onDismiss,
             onConfirm = { name ->
-                viewModel.createFolder(name, app.packageName)
+                viewModel.createFolder(name, app.profileKey)
                 onDismiss()
             }
         )

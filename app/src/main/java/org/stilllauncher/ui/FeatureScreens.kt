@@ -231,8 +231,8 @@ fun ScheduleEditorScreen(
     }
     if (showAppPicker) {
         AppPickerDialog(
-            apps = apps.map {
-                AppEntry(it.packageName, viewModel.displayName(it.packageName))
+            apps = apps.filter { it.isCurrentProfile }.map {
+                AppEntry(it.profileKey, viewModel.displayName(it))
             },
             selected = packages,
             multi = true,
@@ -309,8 +309,9 @@ fun LimitsScreen(
     if (showPicker) {
         AppPickerDialog(
             apps = apps
-                .filter { app -> settings.limits.none { it.packageName == app.packageName } }
-                .map { AppEntry(it.packageName, viewModel.displayName(it.packageName)) },
+                .filter { it.isCurrentProfile }
+                .filter { app -> settings.limits.none { it.packageName == app.profileKey } }
+                .map { AppEntry(it.profileKey, viewModel.displayName(it)) },
             selected = emptySet(),
             multi = false,
             title = "Add a limit",
@@ -446,7 +447,8 @@ fun MonochromeScreen(
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
-    val apps by viewModel.apps.collectAsStateWithLifecycle()
+    val allApps by viewModel.apps.collectAsStateWithLifecycle()
+    val apps = allApps.filter { it.isCurrentProfile }
     var refresh by remember { mutableStateOf(0) }
     var copied by remember { mutableStateOf(false) }
     val hasPermission = remember(refresh) { Permissions.canWriteSecureSettings(context) }
@@ -504,10 +506,10 @@ fun MonochromeScreen(
                 } else {
                     apps.forEach { app ->
                         SwitchRow(
-                            title = viewModel.displayName(app.packageName),
-                            checked = app.packageName in settings.monochromePackages,
+                            title = viewModel.displayName(app),
+                            checked = app.profileKey in settings.monochromePackages,
                             onCheckedChange = {
-                                viewModel.toggleMonochromePackage(app.packageName)
+                                viewModel.toggleMonochromePackage(app.profileKey)
                             }
                         )
                     }
@@ -525,7 +527,8 @@ fun NotificationsScreen(
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
-    val apps by viewModel.apps.collectAsStateWithLifecycle()
+    val allApps by viewModel.apps.collectAsStateWithLifecycle()
+    val apps = allApps.filter { it.isCurrentProfile }
     var showPicker by remember { mutableStateOf(false) }
     val filtered by FilteredNotificationStore.items.collectAsStateWithLifecycle()
 
@@ -590,7 +593,7 @@ fun NotificationsScreen(
     if (showPicker) {
         AppPickerDialog(
             apps = apps.map {
-                AppEntry(it.packageName, viewModel.displayName(it.packageName))
+                AppEntry(it.profileKey, viewModel.displayName(it))
             },
             selected = settings.notificationAllowed,
             multi = true,
@@ -715,7 +718,8 @@ fun HiddenAppsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            viewModel.displayName(pkg),
+                            viewModel.appForKey(pkg)?.let { viewModel.displayName(it) }
+                                ?: viewModel.displayName(pkg),
                             Modifier.weight(1f),
                             style = MaterialTheme.typography.bodyLarge
                         )

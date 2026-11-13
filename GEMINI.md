@@ -7,7 +7,7 @@ This file is the entry point for Gemini CLI. It covers the project facts, comman
 Still Launcher is an independent, GPL-3.0, text-first Android launcher for digital wellbeing. It replaces an icon grid with a name list and adds optional focus tools: timed app blocking, schedules, daily limits, per-app grayscale, notification filtering, screen-time statistics, a recents section, an alphabetic index bar and a background-app shortcut.
 
 - Package: `org.stilllauncher`
-- Version line: `0.2.3`
+- Version line: `0.2.4`
 - minSdk 32 / targetSdk 36 / compileSdk 36
 - Kotlin 2.2.21, AGP 8.13.2, Gradle 8.13, JDK 17, Compose BOM 2025.04.01
 - Single-activity Compose; no XML layouts, no Navigation library, no database, no DI framework
@@ -52,7 +52,7 @@ SIGNING_KEYSTORE_PATH=/path/to/release.jks \
 SIGNING_KEYSTORE_PASSWORD=... \
 SIGNING_KEY_ALIAS=... \
 SIGNING_KEY_PASSWORD=... \
-./gradlew :app:assembleRelease -PversionName=0.2.3
+./gradlew :app:assembleRelease -PversionName=0.2.4
 ```
 
 Never echo secrets. Never commit a keystore or `keystore.properties`.
@@ -114,7 +114,7 @@ A self-hosted F-Droid test repository is available at `https://yash244466666.git
 - Enforcement order is direct block → schedule → limit → cooldown. Keep the debounce.
 - `BlockedActivity` and `ReminderActivity` are `exported="false"`; test them through `MonitorEngine`, not `adb am start`.
 - Keep `SYSTEM_ALERT_WINDOW` and the accessibility-service path; Android otherwise blocks background activity launches.
-- The app list uses typed entries with unique IDs. Letter-entry indices power the alphabetic index bar.
+- The app list uses typed entries with unique IDs. Letter-entry indices power the alphabetic index bar. Apps from all launcher profiles are included; secondary profiles use `package#userId` keys and a `(dual app)` suffix. Android only exposes other profiles' launcher activities to the default launcher, so set Still Launcher as home before testing clones.
 - Recents are capped at eight; five are shown in the app menu. Android has no global running-app API, so the home indicator shows the last foreground app.
 
 ## Common changes

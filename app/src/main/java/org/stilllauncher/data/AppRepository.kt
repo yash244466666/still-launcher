@@ -5,6 +5,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.LauncherApps
 import android.os.Process
+import android.os.UserHandle
+import android.os.UserManager
 import android.provider.Settings
 import androidx.core.net.toUri
 import java.util.Locale
@@ -15,27 +17,42 @@ class AppRepository(private val context: Context) {
         context.getSystemService(LauncherApps::class.java)
 
     fun loadApps(): List<LauncherApp> {
-        val user = Process.myUserHandle()
-        val fromLauncher = runCatching { launcherApps?.getActivityList(null, user) }
-            .getOrNull()
-            .orEmpty()
-            .mapNotNull { info ->
+        val myUser = Process.myUserHandle()
+        val profiles = runCatching { launcherApps?.profiles }.getOrNull().orEmpty()
+            .ifEmpty {
                 runCatching {
-                    val pkg = info.componentName.packageName
-                    LauncherApp(
-                        packageName = pkg,
-                        activityName = info.componentName.className,
-                        label = info.label?.toString()?.trim().takeUnless { it.isNullOrEmpty() }
-                            ?: pkg,
-                        isSystem = (info.applicationInfo.flags and
-                            android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0
-                    )
-                }.getOrNull()
+                    context.getSystemService(UserManager::class.java)?.userProfiles
+                }.getOrNull().orEmpty()
             }
+            .ifEmpty { listOf(myUser) }
+            .distinct()
+
+        val fromLauncher = profiles.flatMap { user ->
+            runCatching { launcherApps?.getActivityList(null, user) }
+                .getOrNull()
+                .orEmpty()
+                .mapNotNull { info ->
+                    runCatching {
+                        val pkg = info.componentName.packageName
+                        LauncherApp(
+                            packageName = pkg,
+                            activityName = info.componentName.className,
+                            label = info.label?.toString()?.trim().takeUnless { it.isNullOrEmpty() }
+                                ?: pkg,
+                            isSystem = (info.applicationInfo.flags and
+                                android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0,
+                            userHandle = user,
+                            profileKey = profileKeyFor(pkg, user.hashCode(), myUser.hashCode()),
+                            profileSuffix = profileSuffixFor(user, myUser)
+                        )
+                    }.getOrNull()
+                }
+        }
 
         val apps = if (fromLauncher.isNotEmpty()) {
             fromLauncher
         } else {
+            // Fallback for devices that do not expose LauncherApps profiles.
             val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
             runCatching {
                 context.packageManager.queryIntentActivities(intent, 0).mapNotNull { info ->
@@ -47,33 +64,49 @@ class AppRepository(private val context: Context) {
                             label = info.loadLabel(context.packageManager).toString().trim()
                                 .ifEmpty { pkg },
                             isSystem = (info.activityInfo.applicationInfo.flags and
-                                android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0
+                                android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0,
+                            userHandle = myUser,
+                            profileKey = pkg,
+                            profileSuffix = ""
                         )
                     }.getOrNull()
                 }
             }.getOrDefault(emptyList())
         }
 
-        return apps.distinctBy { it.packageName }
-            .sortedBy { it.label.lowercase(Locale.getDefault()) }
+        return apps.distinctBy { it.profileKey }
+            .sortedWith(
+                compareBy(
+                    { it.label.lowercase(Locale.getDefault()) },
+                    { if (it.isCurrentProfile) 0 else 1 }
+                )
+            )
+    }
+
+    private fun profileSuffixFor(user: UserHandle, myUser: UserHandle): String {
+        if (user == myUser) return ""
+        // OEM "dual apps", "parallel apps" and work profiles are all separate
+        // Android users. Android does not expose a reliable public per-profile
+        // type through LauncherApps, so use one clear label.
+        return " (dual app)"
     }
 
     fun labelFor(packageName: String): String = runCatching {
         val pm = context.packageManager
-        pm.getApplicationInfo(packageName, 0)
-        pm.getApplicationLabel(pm.getApplicationInfo(packageName, 0)).toString()
+        val info = pm.getApplicationInfo(packageName, 0)
+        pm.getApplicationLabel(info).toString()
     }.getOrDefault(packageName)
 
     fun launch(app: LauncherApp) {
         runCatching {
             launcherApps?.startMainActivity(
                 ComponentName(app.packageName, app.activityName),
-                Process.myUserHandle(),
+                app.userHandle,
                 null,
                 null
             )
         }.onFailure {
-            launchPackage(app.packageName)
+            if (app.isCurrentProfile) launchPackage(app.packageName)
         }
     }
 
@@ -96,6 +129,21 @@ class AppRepository(private val context: Context) {
         }
     }
 
+    fun openAppInfo(app: LauncherApp) {
+        if (app.isCurrentProfile) {
+            openAppInfo(app.packageName)
+            return
+        }
+        runCatching {
+            launcherApps?.startAppDetailsActivity(
+                ComponentName(app.packageName, app.activityName),
+                app.userHandle,
+                null,
+                null
+            )
+        }
+    }
+
     fun uninstall(packageName: String) {
         runCatching {
             context.startActivity(
@@ -104,5 +152,9 @@ class AppRepository(private val context: Context) {
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             )
         }
+    }
+
+    fun uninstall(app: LauncherApp) {
+        if (app.isCurrentProfile) uninstall(app.packageName)
     }
 }

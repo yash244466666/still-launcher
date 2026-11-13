@@ -59,7 +59,7 @@ private data class FolderEntry(val folder: AppFolder, val expanded: Boolean) : L
 }
 
 private data class FolderChildEntry(val folderName: String, val app: LauncherApp) : ListEntry {
-    override val id: String = "folder-$folderName-${app.packageName}"
+    override val id: String = "folder-$folderName-${app.profileKey}"
 }
 
 private data class LetterTarget(val letter: String, val index: Int)
@@ -91,43 +91,43 @@ fun AllAppsScreen(
     val hidden = settings.hidden.toSet()
     val favoriteSet = settings.favorites.toSet()
     val folderMembers = settings.folders.flatMap { it.packages }.toSet()
-    val visibleApps = apps.filter { it.packageName !in hidden }
-    val favoriteApps = settings.favorites.mapNotNull { pkg ->
-        visibleApps.firstOrNull { it.packageName == pkg }
+    val visibleApps = apps.filter { it.profileKey !in hidden }
+    val favoriteApps = settings.favorites.mapNotNull { key ->
+        visibleApps.firstOrNull { it.profileKey == key }
     }
     val recentApps = settings.recentApps.mapNotNull { rec ->
-        visibleApps.firstOrNull { it.packageName == rec.packageName }
+        visibleApps.firstOrNull { it.profileKey == rec.packageName }
     }.take(5)
     val rest = visibleApps.filter {
-        it.packageName !in favoriteSet && it.packageName !in folderMembers
+        it.profileKey !in favoriteSet && it.profileKey !in folderMembers
     }
 
-    val nameOf: (String) -> String = { viewModel.displayName(it) }
+    val nameOf: (LauncherApp) -> String = { viewModel.displayName(it) }
 
     val filtered = if (query.isBlank()) emptyList() else visibleApps.filter {
-        nameOf(it.packageName).contains(query, ignoreCase = true)
+        nameOf(it).contains(query, ignoreCase = true)
     }
 
-    val grouped = rest.groupBy { firstLetter(nameOf(it.packageName)) }
+    val grouped = rest.groupBy { firstLetter(nameOf(it)) }
         .toSortedMap(compareBy { if (it == "#") "{" else it })
 
     val entries = buildList {
         if (query.isBlank()) {
             if (recentApps.isNotEmpty()) {
                 add(HeaderEntry("Recent apps", "header-recent"))
-                recentApps.forEach { add(AppEntryItem(it, "recent-${it.packageName}")) }
+                recentApps.forEach { add(AppEntryItem(it, "recent-${it.profileKey}")) }
             }
             if (favoriteApps.isNotEmpty()) {
                 add(HeaderEntry("Favourites", "header-favourites"))
-                favoriteApps.forEach { add(AppEntryItem(it, "fav-${it.packageName}")) }
+                favoriteApps.forEach { add(AppEntryItem(it, "fav-${it.profileKey}")) }
             }
             if (settings.folders.isNotEmpty()) {
                 add(HeaderEntry("Folders", "header-folders"))
                 settings.folders.forEach { folder ->
                     add(FolderEntry(folder, folder.name in expandedFolders))
                     if (folder.name in expandedFolders) {
-                        folder.packages.mapNotNull { pkg ->
-                            visibleApps.firstOrNull { it.packageName == pkg }
+                        folder.packages.mapNotNull { key ->
+                            visibleApps.firstOrNull { it.profileKey == key }
                         }.forEach { app ->
                             add(FolderChildEntry(folder.name, app))
                         }
@@ -138,7 +138,7 @@ fun AllAppsScreen(
                 add(HeaderEntry("All apps", "header-all"))
                 grouped.forEach { (letter, list) ->
                     add(LetterEntry(letter))
-                    list.forEach { add(AppEntryItem(it, "all-${it.packageName}")) }
+                    list.forEach { add(AppEntryItem(it, "all-${it.profileKey}")) }
                 }
             }
         }
@@ -171,9 +171,9 @@ fun AllAppsScreen(
                 if (filtered.isEmpty()) {
                     item { EmptyHint("No apps match \"$query\"") }
                 } else {
-                    items(filtered, key = { "search-${it.packageName}" }) { app ->
+                    items(filtered, key = { "search-${it.profileKey}" }) { app ->
                         AppRow(
-                            label = nameOf(app.packageName),
+                            label = nameOf(app),
                             onClick = { viewModel.launch(app) },
                             onLongClick = { selected = app }
                         )
@@ -199,14 +199,14 @@ fun AllAppsScreen(
                             )
 
                             is AppEntryItem -> AppRow(
-                                label = nameOf(entry.app.packageName),
+                                label = nameOf(entry.app),
                                 onClick = { viewModel.launch(entry.app) },
                                 onLongClick = { selected = entry.app }
                             )
 
                             is FolderEntry -> {
                                 val count = entry.folder.packages.count { pkg ->
-                                    visibleApps.any { it.packageName == pkg }
+                                    visibleApps.any { it.profileKey == pkg }
                                 }
                                 AppRow(
                                     label = "${entry.folder.name}  ($count)",
@@ -223,7 +223,7 @@ fun AllAppsScreen(
                             }
 
                             is FolderChildEntry -> AppRow(
-                                label = nameOf(entry.app.packageName),
+                                label = nameOf(entry.app),
                                 indent = 16,
                                 onClick = { viewModel.launch(entry.app) },
                                 onLongClick = { selected = entry.app }
