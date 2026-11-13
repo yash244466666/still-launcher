@@ -1,17 +1,52 @@
 package org.stilllauncher.util
 
+import android.Manifest
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
-import android.service.notification.NotificationListenerService
 import android.view.accessibility.AccessibilityManager
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.net.toUri
 import org.stilllauncher.data.UsageRepository
+import org.stilllauncher.service.AppAccessibilityService
+
+data class PermissionStatus(
+    val defaultLauncher: Boolean,
+    val usageAccess: Boolean,
+    val accessibility: Boolean,
+    val notificationListener: Boolean,
+    val postNotifications: Boolean,
+    val overlay: Boolean,
+    val ignoringBatteryOptimizations: Boolean,
+    val secureSettings: Boolean
+)
 
 object Permissions {
+
+    /**
+     * Reads every permission once. UI screens should call this behind a
+     * refresh counter so a manual grant, a system-settings round trip or the
+     * Refresh button updates the displayed state.
+     */
+    fun readStatus(context: Context): PermissionStatus {
+        val postNotifications = Build.VERSION.SDK_INT < 33 ||
+            context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) ==
+            PackageManager.PERMISSION_GRANTED
+        return PermissionStatus(
+            defaultLauncher = isDefaultLauncher(context),
+            usageAccess = hasUsageAccess(context),
+            accessibility = isAccessibilityEnabled(context),
+            notificationListener = isNotificationListenerEnabled(context),
+            postNotifications = postNotifications,
+            overlay = canDrawOverlays(context),
+            ignoringBatteryOptimizations = isIgnoringBatteryOptimizations(context),
+            secureSettings = canWriteSecureSettings(context)
+        )
+    }
 
     fun isDefaultLauncher(context: Context): Boolean {
         val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
@@ -25,6 +60,23 @@ object Permissions {
     fun hasUsageAccess(context: Context): Boolean = UsageRepository.hasAccess(context)
 
     fun isAccessibilityEnabled(context: Context): Boolean {
+        val resolver = context.contentResolver
+        if (Settings.Secure.getInt(resolver, Settings.Secure.ACCESSIBILITY_ENABLED, 0) != 1) {
+            return false
+        }
+        // Read the secure setting directly first: AccessibilityManager can keep
+        // a stale list immediately after the user returns from system settings.
+        val enabledServices = Settings.Secure.getString(
+            resolver,
+            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+        ).orEmpty()
+        val matchesSetting = enabledServices.split(':').any { value ->
+            val component = ComponentName.unflattenFromString(value) ?: return@any false
+            component.packageName == context.packageName &&
+                component.className == AppAccessibilityService::class.java.name
+        }
+        if (matchesSetting) return true
+
         val manager = context.getSystemService(AccessibilityManager::class.java) ?: return false
         return manager.getEnabledAccessibilityServiceList(
             android.accessibilityservice.AccessibilityServiceInfo.FEEDBACK_ALL_MASK
@@ -33,12 +85,24 @@ object Permissions {
         }
     }
 
-    fun isNotificationListenerEnabled(context: Context): Boolean =
-        NotificationManagerCompat.getEnabledListenerPackages(context)
-            .contains(context.packageName)
+    fun isNotificationListenerEnabled(context: Context): Boolean {
+        if (NotificationManagerCompat.getEnabledListenerPackages(context)
+                .contains(context.packageName)
+        ) {
+            return true
+        }
+        // Fallback for OEMs where the compat cache lags behind the setting.
+        val enabled = Settings.Secure.getString(
+            context.contentResolver,
+            "enabled_notification_listeners"
+        ).orEmpty()
+        return enabled.split(':').any { value ->
+            ComponentName.unflattenFromString(value)?.packageName == context.packageName
+        }
+    }
 
     fun canWriteSecureSettings(context: Context): Boolean =
-        context.checkSelfPermission(android.Manifest.permission.WRITE_SECURE_SETTINGS) ==
+        context.checkSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS) ==
             PackageManager.PERMISSION_GRANTED
 
     fun canDrawOverlays(context: Context): Boolean =

@@ -4,6 +4,13 @@ All notable changes to this project are documented here. This project follows [S
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-11-14
+
+### Fixed
+
+- Permission status now re-reads automatically when returning from system settings and when the Refresh button is tapped.
+- Accessibility and notification-listener detection also read the secure settings directly, avoiding stale OEM caches.
+
 ## [0.2.1] - 2026-11-13
 
 ### Fixed

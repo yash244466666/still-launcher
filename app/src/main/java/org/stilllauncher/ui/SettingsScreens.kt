@@ -34,10 +34,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import org.stilllauncher.BuildConfig
 import org.stilllauncher.StillViewModel
 import org.stilllauncher.data.Settings
-import org.stilllauncher.util.Formats
+import org.stilllauncher.util.PermissionStatus
 import org.stilllauncher.util.Permissions
 
 @Composable
@@ -50,6 +52,9 @@ fun SettingsScreen(
     val context = LocalContext.current
     var refresh by remember { mutableStateOf(0) }
     var clearRecents by remember { mutableStateOf(false) }
+
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { refresh++ }
+    val status = remember(refresh) { Permissions.readStatus(context) }
 
     ScreenScaffold(
         title = "Settings",
@@ -66,7 +71,7 @@ fun SettingsScreen(
             SectionLabel("Status")
             SettingRow(
                 "Permissions",
-                subtitle = permissionSummary(context, refresh),
+                subtitle = permissionSummary(status),
                 onClick = { onNavigate(Route.Permissions) }
             )
             SettingRow(
@@ -76,7 +81,7 @@ fun SettingsScreen(
             )
             SettingRow(
                 "Default home app",
-                subtitle = if (Permissions.isDefaultLauncher(context)) "Still Launcher" else "Not selected",
+                subtitle = if (status.defaultLauncher) "Still Launcher" else "Not selected",
                 onClick = { Permissions.openHomeSettings(context) }
             )
             SwitchRow(
@@ -405,9 +410,10 @@ fun PermissionsScreen(settings: Settings, onBack: () -> Unit, onOpenHelp: () -> 
     val notificationLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { refresh++ }
-    val notificationsGranted = android.os.Build.VERSION.SDK_INT < 33 ||
-        context.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) ==
-        android.content.pm.PackageManager.PERMISSION_GRANTED
+
+    // Re-read after returning from system settings and whenever Refresh is tapped.
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { refresh++ }
+    val status = remember(refresh) { Permissions.readStatus(context) }
 
     ScreenScaffold(
         title = "Permissions",
@@ -431,34 +437,40 @@ fun PermissionsScreen(settings: Settings, onBack: () -> Unit, onOpenHelp: () -> 
             ) {
                 Text("Access greyed out or Play Protect warning? Open help")
             }
+            Text(
+                "Status refreshes when you return from system settings. Tap Refresh to re-check immediately.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
+            )
 
             PermissionRow(
                 title = "Default home app",
-                granted = Permissions.isDefaultLauncher(context),
+                granted = status.defaultLauncher,
                 actionLabel = "Choose",
                 onAction = { Permissions.openHomeSettings(context) }
             )
             PermissionRow(
                 title = "Usage access",
-                granted = Permissions.hasUsageAccess(context),
+                granted = status.usageAccess,
                 actionLabel = "Grant",
                 onAction = { Permissions.openUsageAccess(context) }
             )
             PermissionRow(
                 title = "Accessibility service",
-                granted = Permissions.isAccessibilityEnabled(context),
+                granted = status.accessibility,
                 actionLabel = "Enable",
                 onAction = { Permissions.openAccessibility(context) }
             )
             PermissionRow(
                 title = "Notification listener",
-                granted = Permissions.isNotificationListenerEnabled(context),
+                granted = status.notificationListener,
                 actionLabel = "Enable",
                 onAction = { Permissions.openNotificationListener(context) }
             )
             PermissionRow(
                 title = "Post notifications",
-                granted = notificationsGranted,
+                granted = status.postNotifications,
                 actionLabel = "Allow",
                 onAction = {
                     if (android.os.Build.VERSION.SDK_INT >= 33) {
@@ -468,24 +480,24 @@ fun PermissionsScreen(settings: Settings, onBack: () -> Unit, onOpenHelp: () -> 
             )
             PermissionRow(
                 title = "Display over other apps",
-                granted = Permissions.canDrawOverlays(context),
+                granted = status.overlay,
                 actionLabel = "Allow",
                 onAction = { Permissions.openOverlaySettings(context) }
             )
             PermissionRow(
                 title = "Ignore battery optimisation",
-                granted = Permissions.isIgnoringBatteryOptimizations(context),
+                granted = status.ignoringBatteryOptimizations,
                 actionLabel = "Allow",
                 onAction = { Permissions.openBatteryOptimization(context) }
             )
             PermissionRow(
                 title = "Write secure settings (monochrome)",
-                granted = Permissions.canWriteSecureSettings(context),
+                granted = status.secureSettings,
                 actionLabel = "Instructions",
                 onAction = { copied = false }
             )
 
-            if (!Permissions.canWriteSecureSettings(context)) {
+            if (!status.secureSettings) {
                 Column(Modifier.padding(horizontal = 20.dp)) {
                     Text(
                         "Grayscale needs a permission that Android only grants from a computer. Connect this phone with USB debugging enabled and run:",
@@ -568,11 +580,11 @@ private fun OptionRow(label: String, selected: Boolean, onClick: () -> Unit) {
     }
 }
 
-private fun permissionSummary(context: Context, refresh: Int): String {
+private fun permissionSummary(status: PermissionStatus): String {
     val granted = buildList {
-        if (Permissions.hasUsageAccess(context)) add("usage")
-        if (Permissions.isAccessibilityEnabled(context)) add("accessibility")
-        if (Permissions.isNotificationListenerEnabled(context)) add("notifications")
+        if (status.usageAccess) add("usage")
+        if (status.accessibility) add("accessibility")
+        if (status.notificationListener) add("notifications")
     }
     return if (granted.isEmpty()) "Not granted · tap to review"
     else granted.joinToString(", ")
