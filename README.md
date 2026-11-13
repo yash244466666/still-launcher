@@ -1,0 +1,190 @@
+# Still Launcher
+
+[![CI](https://github.com/yash244466666/still-launcher/actions/workflows/ci.yml/badge.svg)](https://github.com/yash244466666/still-launcher/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/yash244466666/still-launcher?include_prereleases&label=release)](https://github.com/yash244466666/still-launcher/releases)
+[![License: GPL v3](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
+
+A text-first Android launcher for digital wellbeing, built as an independent open-source project.
+
+Still Launcher replaces the home-screen icon grid with a short list of names, then adds optional focus tools: timed app blocks, day/time schedules, daily app budgets, per-app grayscale, notification filtering, and screen-time statistics. There is no account, no advertising, and no analytics SDK.
+
+> **Status:** MVP / 0.1.0. Built, unit-tested (10/10) and smoke-tested on an Android 15 (API 35) emulator. Not yet tested on physical devices. See [Limitations](#limitations).
+
+---
+
+## Why this exists
+
+Most phones are designed to keep you on them. Still Launcher takes the opposite approach: a quiet list of names, a clock, and a small set of tools you switch on deliberately.
+
+This is an independent clean-room project. **No source code, assets, strings, icons, or branding from any commercial launcher are used here.** All code, text and artwork are original, and the project is not affiliated with or endorsed by any other launcher.
+
+---
+
+## Features
+
+| Area | What works |
+|---|---|
+| Home screen | Clock + date circle with battery arc, favourites as plain text, phone shortcut, all-apps and settings entry points |
+| App list | Alphabetical text list with letter headers, search, favourites, folders, hide/rename/move/unhide, app info, uninstall |
+| App blocking | Block any app for 1 h – 30 days; full-screen block screen with countdown and an explicit “end block early” escape |
+| Schedules | Recurring day/time windows that block a chosen set of apps; overnight windows supported |
+| Daily limits | Per-app daily budget; choose remind / exit / 15-minute cooldown behaviour; live usage display |
+| Monochrome | Per-app grayscale via Android’s display daltonizer; opt-in, requires a one-time adb grant |
+| Notification filter | Allow-list of apps that may post; disallowed notifications are cancelled and listed in-app |
+| Short-video guard | Optional accessibility probe that interrupts YouTube Shorts, Instagram Reels and Snapchat Spotlight while scrolling (experimental; app updates can change the probes) |
+| Screen time | Today / week / month per-app usage reconstructed from UsageStats events |
+| Appearance | System / black / white / E-Ink / custom background, four font families, seven text sizes, date/time formats |
+| Gestures | Swipe up for search, swipe down for notification shade, double-tap to lock |
+
+## Screenshots
+
+| Home (dark) | App list | Blocked |
+|---|---|---|
+| ![Home](docs/screenshots/home-dark.png) | ![App list](docs/screenshots/apps.png) | ![Blocked](docs/screenshots/blocked.png) |
+
+---
+
+## Releases
+
+- **Tagged releases** (`v*`) are built, signed, checksummed and published by [`.github/workflows/release.yml`](.github/workflows/release.yml).
+- **Every push to `main`** refreshes a rolling prerelease called [Latest build](https://github.com/yash244466666/still-launcher/releases/tag/latest) with a freshly built debug APK and SHA-256 sums.
+- Pull requests and `main` run tests, lint and a debug build in [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
+
+To cut a release:
+
+```bash
+git tag v0.2.0
+git push origin v0.2.0
+```
+
+Or run the **Release** workflow manually with a version number.
+
+### Release signing
+
+The release workflow expects four repository secrets: `SIGNING_KEYSTORE_BASE64`, `SIGNING_KEYSTORE_PASSWORD`, `SIGNING_KEY_ALIAS`, `SIGNING_KEY_PASSWORD`. Generate a keystore once and keep a secure backup; Android will not install an update signed by a different key.
+
+```bash
+keytool -genkeypair -v -keystore release.jks -alias stilllauncher \
+  -keyalg RSA -keysize 4096 -validity 10000
+base64 -w0 release.jks | gh secret set SIGNING_KEYSTORE_BASE64
+```
+
+---
+
+## How it is built
+
+```
+app/src/main/java/org/stilllauncher/
+├── MainActivity.kt              single-activity Compose host + HOME intent
+├── StillViewModel.kt            settings/app-list state and all mutations
+├── data/
+│   ├── Models.kt                BlockedApp, BlockSchedule, AppLimit, AppFolder, Settings
+│   ├── SettingsStore.kt         Preferences DataStore, JSON for collections
+│   ├── AppRepository.kt         LauncherApps / PackageManager
+│   └── UsageRepository.kt       UsageStatsManager event-interval reconstruction
+├── service/
+│   ├── MonitorEngine.kt         foreground -> block / limit / grayscale decisions
+│   ├── MonitorService.kt        specialUse foreground service, 2 s UsageStats poll
+│   ├── AppAccessibilityService.kt  instant foreground events + global actions
+│   ├── NotificationFilterService.kt  NotificationListenerService allow-list
+│   └── BootReceiver.kt          restart the guard after reboot
+└── ui/                          Compose screens (home, apps, settings, focus tools)
+```
+
+Enforcement is deliberately transparent and user-owned:
+
+1. **Accessibility service** reports `TYPE_WINDOW_STATE_CHANGED` / `TYPE_WINDOW_CONTENT_CHANGED`.
+2. **MonitorService** polls `UsageStatsManager` every two seconds as a fallback.
+3. Both call `MonitorEngine.onForeground(packageName)`.
+4. The engine checks, in order: timed block → active schedule → daily limit → cooldown.
+5. A match launches `BlockedActivity` or `ReminderActivity` with the reason and end time.
+6. Monochrome is applied on the same transition by writing `accessibility_display_daltonizer*`, and is cleared on screen-off.
+
+Nothing is enforced with device-owner or kiosk APIs; force-stopping the app or revoking a permission turns enforcement off. That is intentional: this is a wellbeing tool, not a lock.
+
+---
+
+## Permissions
+
+| Permission | Why | Required? |
+|---|---|---|
+| `PACKAGE_USAGE_STATS` | foreground detection + screen-time stats | recommended |
+| Accessibility service | immediate foreground detection, double-tap lock | optional |
+| Notification listener | notification allow-list | optional |
+| `POST_NOTIFICATIONS` | foreground-service notification | recommended |
+| `SYSTEM_ALERT_WINDOW` | lets the block/reminder screen appear over the app on Android's background-activity rules | recommended |
+| `WRITE_SECURE_SETTINGS` | per-app grayscale only | optional, adb only |
+| `RECEIVE_BOOT_COMPLETED` | restore the guard after reboot | optional |
+
+`QUERY_ALL_PACKAGES` is **not** used. App visibility comes from a `<queries>` MAIN/LAUNCHER intent, which is the least-privilege way to build a launcher.
+
+### Grayscale grant
+
+```bash
+adb shell pm grant org.stilllauncher android.permission.WRITE_SECURE_SETTINGS
+```
+
+---
+
+## Build
+
+Requirements: JDK 17, Android SDK platform 36, build-tools 36.
+
+```bash
+./gradlew :app:assembleDebug
+# APK: app/build/outputs/apk/debug/app-debug.apk
+```
+
+Set `sdk.dir` in `local.properties` or `ANDROID_HOME`.
+
+---
+
+## Privacy
+
+- No `INTERNET` permission is declared. The app cannot phone home.
+- Blocks, limits, folders, notification settings and statistics stay in Preferences DataStore inside the app sandbox.
+- Filtered-notification history is kept in memory only and cleared when the process dies.
+- Accessibility content is read only to determine the foreground package. Screen text is not stored or transmitted.
+
+---
+
+## Verification (2026-11-13)
+
+Smoke-tested on the `yash_tools_api35_test` Android 15 emulator:
+
+- onboarding → home; clock, date, battery arc and favourites
+- all-apps list, search field, letter sections, long-press actions, favourites
+- timed block: Chrome blocked, `BlockedActivity` shown with countdown and end-early escape
+- schedule editor with day/time/app pickers (overnight 22:00–07:00)
+- daily-limit editor and saved limit
+- monochrome: `accessibility_display_daltonizer_enabled` toggles 1→0 and value 0→-1 when entering/leaving the selected app
+- notification filter: a shell notification was cancelled and recorded as `com.android.shell`
+- swipe up (app list) and swipe down (notification shade)
+- black theme, including white system-bar icons; Home intent resets navigation to the launcher screen
+
+Not exercised at runtime: the reminder activity, schedule enforcement at the exact wall-clock window, short-video probes (need real YouTube/Instagram/Snapchat UIs).
+
+## Limitations
+
+- Tested on an emulator; not yet exercised on a physical device in this workspace.
+- Grayscale depends on OEM support for the daltonizer secure setting.
+- Some OEMs aggressively kill foreground services; battery-optimisation exemption is recommended.
+- Notification filtering may not catch notifications posted while the listener is disconnected.
+- No multi-user/work-profile UI yet; launcher apps are loaded for the current user.
+- The block screen can be dismissed by ending the block. This is a deliberate wellbeing choice, not a bug.
+
+---
+
+## Documentation
+
+- [Architecture](docs/ARCHITECTURE.md) — layers, persistence, enforcement, notification filtering
+- [Changelog](CHANGELOG.md)
+- [Contributing](CONTRIBUTING.md)
+- [Security policy](SECURITY.md)
+- [Code of Conduct](CODE_OF_CONDUCT.md)
+
+## License
+
+GNU General Public License v3.0. See [LICENSE](LICENSE).
+
+This project is not affiliated with, endorsed by, or derived from any commercial launcher. “Still Launcher” and its icon are original.
