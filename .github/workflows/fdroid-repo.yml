@@ -104,7 +104,7 @@ jobs:
           gh release download "${{ steps.release.outputs.tag }}" \
             --repo "$GITHUB_REPOSITORY" \
             --pattern 'still-launcher-*-release.apk' \
-            --dir fdroid/repo
+            --dir fdroid/repo --clobber
           ls -lh fdroid/repo
 
       - name: Decode repository signing keystore
