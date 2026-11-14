@@ -2,6 +2,7 @@ package org.stilllauncher.ui
 
 import android.content.ClipData
 import android.content.ClipboardManager
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
@@ -60,10 +61,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.graphics.vector.ImageVector
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -73,6 +77,7 @@ import kotlinx.coroutines.delay
 import org.stilllauncher.BuildConfig
 import org.stilllauncher.StillViewModel
 import org.stilllauncher.data.Settings
+import org.stilllauncher.util.Diagnostics
 import org.stilllauncher.util.Formats
 import org.stilllauncher.util.PermissionStatus
 import org.stilllauncher.util.Permissions
@@ -244,6 +249,13 @@ fun SettingsScreen(
                     title = "Install & access help",
                     subtitle = "Play Protect warnings and restricted settings",
                     onClick = { onNavigate(Route.InstallHelp) }
+                )
+                RowDivider()
+                NavRow(
+                    icon = StillIcons.Gesture,
+                    title = "Home gesture diagnostics",
+                    subtitle = "Window events from the last few minutes",
+                    onClick = { onNavigate(Route.Diagnostics) }
                 )
             }
 
@@ -668,6 +680,14 @@ fun GesturesScreen(viewModel: StillViewModel, settings: Settings, onBack: () -> 
                     subtitle = "Needs the focus guard accessibility service",
                     checked = settings.doubleTapLock,
                     onCheckedChange = viewModel::setDoubleTapLock
+                )
+                RowDivider()
+                ToggleRow(
+                    icon = StillIcons.Gesture,
+                    title = "Keep the home gesture on Home",
+                    subtitle = "Returns here if the system overview opens blank. On by default on Infinix, Tecno and itel; needs the focus guard service.",
+                    checked = settings.homeGestureGuard,
+                    onCheckedChange = viewModel::setHomeGestureGuard
                 )
             }
 
@@ -1119,6 +1139,142 @@ private fun dateLabel(id: String): String = when (id) {
     "dmy" -> "DD/MM/YYYY"
     "mdy" -> "Mon D, YYYY"
     else -> "System"
+}
+
+@Composable
+fun DiagnosticsScreen(settings: Settings, onBack: () -> Unit) {
+    val context = LocalContext.current
+    val lines by Diagnostics.lines.collectAsStateWithLifecycle()
+    var copied by remember { mutableStateOf(false) }
+    val isHome = remember { Permissions.isDefaultLauncher(context) }
+
+    LaunchedEffect(copied) {
+        if (copied) {
+            delay(2_000)
+            copied = false
+        }
+    }
+
+    ScreenScaffold(
+        title = "Home gesture diagnostics",
+        onBack = onBack,
+        subtitle = "In-memory events, never uploaded"
+    ) {
+        Column(
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+        ) {
+            InfoCard(
+                icon = Icons.Outlined.Info,
+                title = "How to use this",
+                text = "If the Home gesture leaves you on a blank screen, reproduce it once, then come back here and tap Copy log. The log holds window package and class names plus launcher activity events. It stays in memory and is cleared when the app closes."
+            )
+
+            SectionHeader("Status")
+            SettingsCard {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(18.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Home gesture guard", style = MaterialTheme.typography.bodyLarge)
+                        Text(
+                            if (settings.homeGestureGuard) {
+                                "On · returns to Home when the overview opens blank"
+                            } else {
+                                "Off · change it in Settings → Gestures"
+                            },
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    StatusPill(
+                        if (settings.homeGestureGuard) "On" else "Off",
+                        if (settings.homeGestureGuard) StatusTone.Positive else StatusTone.Neutral
+                    )
+                }
+                RowDivider()
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(18.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Default home app", style = MaterialTheme.typography.bodyLarge)
+                        Text(
+                            if (isHome) "Still Launcher" else "Not selected",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    StatusPill(
+                        if (isHome) "Ready" else "Check",
+                        if (isHome) StatusTone.Positive else StatusTone.Warning
+                    )
+                }
+            }
+
+            SectionHeader("Event log", "${lines.size} entries")
+            SettingsCard {
+                if (lines.isEmpty()) {
+                    Text(
+                        "No events yet. Use the Home gesture, then open this screen again.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(18.dp)
+                    )
+                } else {
+                    Text(
+                        lines.joinToString("\n"),
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 11.sp,
+                            lineHeight = 15.sp
+                        ),
+                        modifier = Modifier.padding(14.dp)
+                    )
+                }
+            }
+
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                PrimaryButton(
+                    text = if (copied) "Copied" else "Copy log",
+                    onClick = {
+                        val clipboard = context.getSystemService(ClipboardManager::class.java)
+                        val body = buildString {
+                            appendLine("Still Launcher ${BuildConfig.VERSION_NAME}")
+                            appendLine("Android ${Build.VERSION.RELEASE} · SDK ${Build.VERSION.SDK_INT}")
+                            appendLine("${Build.MANUFACTURER} ${Build.MODEL}")
+                            appendLine("default home: $isHome · guard: ${settings.homeGestureGuard}")
+                            appendLine("----")
+                            lines.forEach(::appendLine)
+                        }
+                        clipboard?.setPrimaryClip(
+                            ClipData.newPlainText("Still Launcher diagnostics", body)
+                        )
+                        copied = true
+                    },
+                    modifier = Modifier.weight(1f),
+                    icon = Icons.Outlined.Check
+                )
+                SecondaryButton(
+                    text = "Clear",
+                    onClick = { Diagnostics.clear() },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            Spacer(Modifier.height(24.dp))
+        }
+    }
 }
 
 private fun gestureSummary(settings: Settings): String {

@@ -212,6 +212,7 @@ class StillViewModel(application: Application) : AndroidViewModel(application) {
     fun setSwipeDownNotifications(value: Boolean) = write { this.setSwipeDownNotifications(value) }
     fun setAutoKeyboard(value: Boolean) = write { this.setAutoKeyboard(value) }
     fun setDoubleTapLock(value: Boolean) = write { this.setDoubleTapLock(value) }
+    fun setHomeGestureGuard(value: Boolean) = write { this.setHomeGestureGuard(value) }
     fun setReminderMaster(value: Boolean) = write { this.setReminderMaster(value) }
     fun setShortVideoBlocking(value: Boolean) = write { this.setShortVideoBlocking(value) }
 

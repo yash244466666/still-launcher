@@ -1,6 +1,7 @@
 package org.stilllauncher.data
 
 import android.content.Context
+import android.os.Build
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
@@ -33,6 +34,7 @@ private object K {
     val swipeDownNotifications = booleanPreferencesKey("swipe_down_notifications")
     val autoKeyboard = booleanPreferencesKey("auto_open_keyboard")
     val doubleTapLock = booleanPreferencesKey("double_tap_lock")
+    val homeGestureGuard = booleanPreferencesKey("home_gesture_guard")
     val monitorEnabled = booleanPreferencesKey("monitor_enabled")
     val favorites = stringPreferencesKey("favorites_json")
     val hidden = stringPreferencesKey("hidden_json")
@@ -59,6 +61,21 @@ private inline fun <reified T> decode(raw: String?, fallback: T): T =
     if (raw.isNullOrBlank()) fallback
     else runCatching { json.decodeFromString<T>(raw) }.getOrDefault(fallback)
 
+/**
+ * Transsion builds (Infinix, Tecno, itel) route the Home gesture through a
+ * customized overview that can show a blank launcher card. Start with the
+ * guard on there; every other device starts with it off.
+ */
+private fun defaultHomeGestureGuard(): Boolean {
+    val names = listOf(Build.MANUFACTURER, Build.BRAND, Build.DEVICE, Build.MODEL)
+    return names.any { value ->
+        value.contains("infinix", ignoreCase = true) ||
+            value.contains("tecno", ignoreCase = true) ||
+            value.contains("itel", ignoreCase = true) ||
+            value.contains("transsion", ignoreCase = true)
+    }
+}
+
 class SettingsStore private constructor(context: Context) {
 
     private val appContext = context.applicationContext
@@ -80,6 +97,7 @@ class SettingsStore private constructor(context: Context) {
                 swipeDownNotifications = p[K.swipeDownNotifications] ?: true,
                 autoKeyboard = p[K.autoKeyboard] ?: false,
                 doubleTapLock = p[K.doubleTapLock] ?: false,
+                homeGestureGuard = p[K.homeGestureGuard] ?: defaultHomeGestureGuard(),
                 monitorEnabled = p[K.monitorEnabled] ?: true,
                 favorites = decode(p[K.favorites], emptyList<String>()),
                 hidden = decode(p[K.hidden], emptyList<String>()),
@@ -114,6 +132,7 @@ class SettingsStore private constructor(context: Context) {
     suspend fun setSwipeDownNotifications(value: Boolean) = edit { it[K.swipeDownNotifications] = value }
     suspend fun setAutoKeyboard(value: Boolean) = edit { it[K.autoKeyboard] = value }
     suspend fun setDoubleTapLock(value: Boolean) = edit { it[K.doubleTapLock] = value }
+    suspend fun setHomeGestureGuard(value: Boolean) = edit { it[K.homeGestureGuard] = value }
     suspend fun setMonitorEnabled(value: Boolean) = edit { it[K.monitorEnabled] = value }
     suspend fun setReminderMaster(value: Boolean) = edit { it[K.reminderMaster] = value }
     suspend fun setShortVideoBlocking(value: Boolean) = edit { it[K.shortVideoBlocking] = value }

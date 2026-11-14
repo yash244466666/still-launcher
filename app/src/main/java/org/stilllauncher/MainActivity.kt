@@ -1,6 +1,5 @@
 package org.stilllauncher
 
-import android.app.ActivityManager
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -29,7 +28,8 @@ import org.stilllauncher.service.MonitorService
 import org.stilllauncher.ui.OnboardingScreen
 import org.stilllauncher.ui.StillApp
 import org.stilllauncher.ui.theme.StillTheme
-import org.stilllauncher.util.Permissions
+import org.stilllauncher.util.Diagnostics
+import org.stilllauncher.util.HomeGestureGuard
 
 class MainActivity : ComponentActivity() {
 
@@ -39,10 +39,13 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        excludeCurrentTaskFromRecents()
+        Diagnostics.record("activity", "onCreate task=$taskId ${describe(intent)}")
         setContent {
             val settings by viewModel.settings.collectAsStateWithLifecycle()
             val current = settings
+            LaunchedEffect(current?.homeGestureGuard) {
+                HomeGestureGuard.setEnabled(current?.homeGestureGuard == true)
+            }
             ApplySystemBarAppearance(current)
             LaunchedEffect(current?.introDone, current?.monitorEnabled) {
                 if (current?.introDone == true && current.monitorEnabled) {
@@ -96,6 +99,11 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        Diagnostics.record("activity", "onNewIntent ${describe(intent)}")
+        // A HOME or LAUNCHER delivery always returns the UI to the home
+        // route. The activity itself stays alive: the task is deliberately
+        // left in Recents instead of being excluded from it.
+        setIntent(intent)
         if (intent.hasCategory(Intent.CATEGORY_HOME) ||
             intent.hasCategory(Intent.CATEGORY_LAUNCHER)
         ) {
@@ -105,46 +113,23 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        HomeGestureGuard.onHomeResumed()
+        Diagnostics.record("activity", "onResume task=$taskId")
         viewModel.refreshApps()
-        excludeCurrentTaskFromRecents()
-        removeStaleLauncherTasks()
         val settings = viewModel.settings.value
         if (settings?.introDone == true && settings.monitorEnabled) {
             MonitorService.start(this)
         }
     }
 
-    /**
-     * Reinforces the manifest flag at runtime. Some OEM recents views only
-     * honour the task-level flag, and a home task without a snapshot appears
-     * as a blank full-screen card.
-     */
-    private fun excludeCurrentTaskFromRecents() {
-        val manager = getSystemService(ActivityManager::class.java) ?: return
-        manager.appTasks
-            .firstOrNull { it.taskInfo.id == taskId }
-            ?.setExcludeFromRecents(true)
+    override fun onPause() {
+        Diagnostics.record("activity", "onPause task=$taskId")
+        super.onPause()
     }
 
-    /**
-     * Older builds exposed MainActivity with CATEGORY_LAUNCHER, so tapping the
-     * app icon could create a second, standard task for the same screen. Those
-     * stale tasks can appear as a blank card in Recents. Now that the icon uses
-     * OpenActivity, remove any duplicates once this app is the default home.
-     */
-    private fun removeStaleLauncherTasks() {
-        if (!Permissions.isDefaultLauncher(this)) return
-        val manager = getSystemService(ActivityManager::class.java) ?: return
-        val currentTask = taskId
-        manager.appTasks.forEach { task ->
-            val info = task.taskInfo
-            val baseClass = info.baseActivity?.className
-                ?: info.baseIntent.component?.className
-            if (info.id != currentTask &&
-                baseClass == MainActivity::class.java.name
-            ) {
-                runCatching { task.finishAndRemoveTask() }
-            }
-        }
+    private fun describe(intent: Intent?): String {
+        if (intent == null) return "intent=null"
+        val categories = intent.categories?.joinToString(",").orEmpty()
+        return "action=${intent.action} cats=[$categories]"
     }
 }

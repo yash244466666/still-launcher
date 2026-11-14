@@ -37,45 +37,38 @@
         android:theme="@style/Theme.StillLauncher">
 
         <!--
-            Home activity configuration follows AOSP/Pixel Launcher's
-            transition flags. The task is also kept out of Recents: several
-            OEM recents implementations draw a blank card for a home task
-            that has no snapshot, which looked like a blank home screen.
+            Home activity.
+
+            This configuration deliberately matches the one used by the
+            launchers that survive OEM gesture navigation: one single-task
+            HOME activity, an empty task affinity, and no recents exclusion.
+            Keeping the home task in Recents is intentional - excluding it
+            made some OEM recents implementations show an empty slot instead.
+            A blank overview that appears over Home is dismissed by
+            HomeGestureGuard. `clearTaskOnLaunch` and `resumeWhilePausing`
+            are omitted: both let the task be restarted underneath the
+            recents animation, and XOS can leave the wallpaper visible when
+            that animation is interrupted.
+
+            configChanges keeps the activity alive across rotation, dark
+            mode, font-size and density changes so the Compose window is
+            never torn down while the user is at home.
         -->
         <activity
             android:name=".MainActivity"
-            android:clearTaskOnLaunch="true"
-            android:excludeFromRecents="true"
+            android:configChanges="mcc|mnc|locale|layoutDirection|fontScale|keyboard|keyboardHidden|navigation|orientation|screenLayout|uiMode|screenSize|smallestScreenSize|density"
             android:exported="true"
             android:launchMode="singleTask"
             android:resizeableActivity="true"
-            android:resumeWhilePausing="true"
             android:stateNotNeeded="true"
             android:taskAffinity=""
-            android:theme="@style/Theme.StillLauncher">
+            android:theme="@style/Theme.StillLauncher"
+            android:windowSoftInputMode="adjustPan">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.HOME" />
                 <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
-
-        <!--
-            The app icon opens this trampoline instead of the home activity.
-            Keeping LAUNCHER off the home activity prevents a second, standard
-            task from being created when the icon is tapped.
-        -->
-        <activity
-            android:name=".OpenActivity"
-            android:excludeFromRecents="true"
-            android:exported="true"
-            android:noHistory="true"
-            android:taskAffinity="org.stilllauncher.open"
-            android:theme="@android:style/Theme.NoDisplay">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
-                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
 

@@ -8,7 +8,7 @@ A text-first Android launcher for digital wellbeing, built as an independent ope
 
 Still Launcher replaces the home-screen icon grid with a short list of names, then adds optional focus tools: timed app blocks, day/time schedules, daily app budgets, per-app grayscale, notification filtering, and screen-time statistics. There is no account, no advertising, and no analytics SDK.
 
-> **Status:** 0.3.2. Built, unit-tested (20/20) and smoke-tested on an Android 15 (API 35) emulator. Not yet tested on physical devices. See [Limitations](#limitations).
+> **Status:** 0.3.3. Built, unit-tested (20/20) and smoke-tested on an Android 15 (API 35) emulator. Not yet tested on physical devices. See [Limitations](#limitations).
 
 ---
 
@@ -81,7 +81,7 @@ This is an independent clean-room project. **No source code, assets, strings, ic
 | Short-video guard | Optional accessibility probe that interrupts YouTube Shorts, Instagram Reels and Snapchat Spotlight while scrolling (experimental; app updates can change the probes) |
 | Screen time | Today / week / month per-app usage reconstructed from UsageStats events |
 | Appearance | System / black / white / E-Ink / custom background, four font families, nine text sizes, date/time formats |
-| Gestures | Swipe up for search, swipe down for notification shade, double-tap to lock |
+| Gestures | Swipe up for search, swipe down for notification shade, double-tap to lock, and a Home gesture guard for OEM overviews that open blank |
 
 ## Screenshots
 
@@ -100,8 +100,8 @@ This is an independent clean-room project. **No source code, assets, strings, ic
 To cut a release:
 
 ```bash
-git tag v0.3.2
-git push origin v0.3.2
+git tag v0.3.3
+git push origin v0.3.3
 ```
 
 Or run the **Release** workflow manually with a version number.
@@ -197,7 +197,7 @@ Set `sdk.dir` in `local.properties` or `ANDROID_HOME`.
 
 ---
 
-## Verification (2026-11-13)
+## Verification (2026-11-14)
 
 Smoke-tested on the `yash_tools_api35_test` Android 15 emulator:
 
@@ -210,6 +210,9 @@ Smoke-tested on the `yash_tools_api35_test` Android 15 emulator:
 - monochrome: `accessibility_display_daltonizer_enabled` toggles 1→0 and value 0→-1 when entering/leaving the selected app
 - notification filter: a shell notification was cancelled and recorded as `com.android.shell`
 - swipe up (app list) and swipe down (notification shade)
+- home gesture guard: opening the system overview with the App Switch key while Home was focused returned to Home, including from the app list; opening the overview from inside another app stayed in the overview; the dock Recents button still opened the overview because it suppresses the guard
+- home activity task checks: one task after icon launch, no `excludeFromRecents`, `isPersistable=true`, `activityType=home`
+- home gesture diagnostics screen records activity and window events and copies the log
 - install & access help screen; the release APK is non-debuggable, APK Signature Scheme v3, and its runtime certificate fingerprint matches the published value
 - the app-menu index bar is available on both edges, highlights the current section while scrolling, animates taps and shows a spring letter bubble while scrubbing
 - dual-profile apps are listed separately and launched with the correct user handle (verified with a managed-profile Calendar clone; the launcher must be the default home app for Android to expose other profiles)
@@ -224,6 +227,7 @@ Not exercised at runtime: the reminder activity, schedule enforcement at the exa
 - Android does not expose a global “currently running apps” list. The home indicator shows the most recent app that came to the foreground; it is a resume shortcut, not a live process monitor.
 - Play Protect warnings and Android 13+ restricted settings are OS behaviours that cannot be removed by the app. The release APK is non-debuggable and signed, and the in-app help explains the exact bypass paths. Distribution through Google Play or F-Droid is the only way to remove the unknown-developer warning entirely.
 - The **Recents** shortcut uses the accessibility service's global action. Without that service it shows a hint instead.
+- On some OEM builds (notably Infinix/XOS 16), the system opens its own overview when the Home gesture is used while already on the home screen, and that overview can draw the launcher as an empty card. The Home gesture guard dismisses that overview and needs the accessibility service; it is on by default on Infinix, Tecno and itel and can be changed in **Settings → Gestures**. **Home gesture diagnostics** under **Settings → Setup & help** records the window events for a bug report.
 - Android exposes another profile's launchable apps only to the current/default launcher. If dual apps are missing, set Still Launcher as the default home app. Full secondary users (not profiles) are not visible to normal apps.
 - Pinned to AGP 8.13 and compileSdk 36. The 2026 AndroidX line requires AGP 9.1 and compileSdk 37; that migration is deliberately separate from the 0.1.x line.
 - Grayscale depends on OEM support for the daltonizer secure setting.

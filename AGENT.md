@@ -11,7 +11,7 @@ It is an **independent clean-room project**. There is no affiliation with, endor
 ## Facts you can rely on
 
 - Package: `org.stilllauncher`
-- Current line: `0.3.2`
+- Current line: `0.3.3`
 - minSdk 32, targetSdk 36, compileSdk 36
 - Kotlin 2.2.21, AGP 8.13.2, Gradle 8.13, JDK 17, Compose BOM 2025.04.01
 - Single activity, Jetpack Compose, no XML layouts, no Navigation library
@@ -92,6 +92,8 @@ app/build/outputs/apk/release/app-release.apk
 | `ui/BlockedActivity.kt` / `ReminderActivity.kt` | Enforcement UI |
 | `ui/theme/Theme.kt` | Palette, typography, surface content colour |
 | `util/AppSigning.kt` | SHA-256 fingerprint of the installed signing certificate |
+| `util/HomeGestureGuard.kt` | Dismisses a blank OEM overview opened over Home |
+| `util/Diagnostics.kt` | In-memory activity/window event log for gesture diagnostics |
 | `.github/workflows/` | CI, signed release, rolling latest build |
 | `docs/ARCHITECTURE.md` | Design notes |
 | `.claude/` | Claude Code settings, commands and reviewer subagent |
@@ -166,6 +168,13 @@ Accessibility event ─┐
 4. Clearing is exposed in Settings → Home screen → Recent apps.
 5. Android has no global running-app API. The indicator is the last foreground app. Never label it as a live process monitor.
 
+### Work on the home task or gesture navigation
+
+1. `MainActivity` is single-task with empty affinity and HOME+LAUNCHER. Do not add `excludeFromRecents`, `clearTaskOnLaunch` or `resumeWhilePausing`; they cause blank OEM overviews on Infinix/XOS.
+2. `HomeGestureGuard` dismisses an overview that opens over Home. It needs the accessibility service; the dock Recents button calls `suppress()`.
+3. `Diagnostics` is in-memory only. Keep it unpersisted and unuploaded, and expose it through Settings → Home gesture diagnostics.
+4. Home-type tasks are never snapshotted by Android. Do not try to “fix” a blank card by finishing or excluding the task.
+
 ### Work on the index bar
 
 1. Positions come from `LetterEntry` indices in the flat list.
@@ -192,7 +201,7 @@ Always run:
 ./gradlew :app:assembleDebug
 ```
 
-Expected: 14 tests pass (10 schedule, 4 recents), lint success, APK produced.
+Expected: 20 tests pass, lint success, APK produced.
 
 Runtime smoke test (API 35 emulator or device):
 
@@ -263,9 +272,9 @@ The metadata lives in `fdroid/metadata/`. The generated `fdroid/config.yml` and 
 Releases are created by pushing a semantic-version tag:
 
 ```bash
-git tag v0.3.2
+git tag v0.3.3
 git push origin main
-git push origin v0.3.2
+git push origin v0.3.3
 ```
 
 The Release workflow:

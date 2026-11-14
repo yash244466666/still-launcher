@@ -57,6 +57,7 @@ import org.stilllauncher.StillViewModel
 import org.stilllauncher.data.LauncherApp
 import org.stilllauncher.data.Settings
 import org.stilllauncher.util.Formats
+import org.stilllauncher.util.HomeGestureGuard
 import org.stilllauncher.util.SystemActions
 
 @Composable
@@ -191,6 +192,9 @@ fun HomeScreen(
                     }
                 },
                 onRecents = {
+                    // A deliberate Recents tap must not be mistaken for the
+                    // OEM's blank overview after the Home gesture.
+                    HomeGestureGuard.suppress()
                     if (!SystemActions.openRecents()) {
                         Toast.makeText(
                             context,

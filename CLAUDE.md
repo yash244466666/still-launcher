@@ -6,7 +6,7 @@ This file is the project handbook for Claude Code and other AI coding agents. Re
 
 Still Launcher is an independent, GPL-3.0, text-first Android home-screen replacement focused on digital wellbeing. It is a single-activity Jetpack Compose app with no backend, no account, no analytics and **no `INTERNET` permission**.
 
-Current release line: **0.3.2**. State: buildable, lint-clean, 20/20 JVM tests, and smoke-tested on an Android 15 (API 35) emulator. It has not been tested on physical devices.
+Current release line: **0.3.3**. State: buildable, lint-clean, 20/20 JVM tests, and smoke-tested on an Android 15 (API 35) emulator. It has not been tested on physical devices.
 
 The project is a clean-room implementation of an idea. Never copy source code, strings, drawables, icons or branding from another launcher.
 
@@ -78,7 +78,7 @@ app/src/main/java/org/stilllauncher/
 │   ├── BlockedActivity.kt       full-screen block with countdown and early exit
 │   ├── ReminderActivity.kt      daily-limit reminder
 │   └── theme/Theme.kt           palette, typography, Surface content colour
-└── util/                        formats, permissions, system actions, labels, signing fingerprint
+└── util/                        formats, permissions, system actions, labels, signing fingerprint, diagnostics, home gesture guard
 ```
 
 Other important files:
@@ -105,6 +105,8 @@ Other important files:
 The engine records the recent list, applies monochrome, then evaluates direct block → active schedule → daily limit → cooldown. A match launches `BlockedActivity` or `ReminderActivity`. A short debounce prevents repeated launches. `SYSTEM_ALERT_WINDOW` and the accessibility service are what make background activity launches reliable; keep those paths intact.
 
 **Recents.** `addRecentApp()` moves a package to the front, deduplicates and caps at eight. `MonitorEngine.recordRecent` only records launchable packages and throttles the same package for ten minutes. Home shows the newest entry; the app menu shows the newest five. The list is local and clearable in Settings.
+
+**Home task and OEM gestures.** `MainActivity` is a single-task HOME+LAUNCHER activity with an empty task affinity, `stateNotNeeded`, no `excludeFromRecents`, no `clearTaskOnLaunch` and no `resumeWhilePausing`. Do not add those flags back: on Infinix/XOS the home task then appears as an empty card in the system overview. `HomeGestureGuard` detects an overview/recents window that opens while the launcher was the focused window and sends HOME again; the dock Recents button calls `suppress()` so deliberate Recents access still works. The guard needs the accessibility service and the `homeGestureGuard` setting (on by default on Infinix/Tecno/itel). `Diagnostics` keeps the last 200 activity/window events in memory for **Settings → Home gesture diagnostics**; it must stay unpersisted and unuploaded.
 
 **App list.** `AllAppsScreen` flattens sections into typed entries (`HeaderEntry`, `LetterEntry`, `AppEntryItem`, `FolderEntry`, `FolderChildEntry`) with unique IDs. Letter entries carry their LazyList index, which powers the alphabetic index bar. If you add a section, add an entry type and keep IDs unique.
 
@@ -242,7 +244,8 @@ Required repository secrets: `SIGNING_KEYSTORE_BASE64`, `SIGNING_KEYSTORE_PASSWO
 ## 11. Known gotchas
 
 - `BlockedActivity` and `ReminderActivity` are not exported, so `adb shell am start` cannot launch them directly. Test through `MonitorEngine`.
-- Without usage access, the polling service cannot detect foreground apps. Without accessibility, “Recents” shows a toast instead of opening the recents screen.
+- Without usage access, the polling service cannot detect foreground apps. Without accessibility, “Recents” shows a toast instead of opening the recents screen, and the Home gesture guard cannot dismiss a blank OEM overview.
+- Android never snapshots HOME-type tasks (`TaskSnapshotController` skips them), so an OEM recents view that lists the home task has no image to draw. That is why the launcher must not fight the OEM task list with `excludeFromRecents`/`finishAndRemoveTask`; the guard deals with the overview instead. Do not “fix” this by excluding the task again.
 - Android does not expose a global running-app list. The home indicator is “last foreground app”, not a live process monitor. Do not promise otherwise.
 - R8 minifies release builds. Keep the kotlinx.serialization rules in `proguard-rules.pro`; test the signed release APK when changing serializable models.
 - Adaptive icons must stay in `mipmap-anydpi-v26`; AAPT does not compile `<adaptive-icon>` from an unversioned `mipmap-anydpi` folder.

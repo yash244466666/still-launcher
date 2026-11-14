@@ -127,6 +127,7 @@ data class Settings(
     val swipeDownNotifications: Boolean = true,
     val autoKeyboard: Boolean = false,
     val doubleTapLock: Boolean = false,
+    val homeGestureGuard: Boolean = false,
     val monitorEnabled: Boolean = true,
     val favorites: List<String> = emptyList(),
     val hidden: List<String> = emptyList(),

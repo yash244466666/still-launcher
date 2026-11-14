@@ -7,7 +7,7 @@ This file is the entry point for Gemini CLI. It covers the project facts, comman
 Still Launcher is an independent, GPL-3.0, text-first Android launcher for digital wellbeing. It replaces an icon grid with a name list and adds optional focus tools: timed app blocking, schedules, daily limits, per-app grayscale, notification filtering, screen-time statistics, a recents section, an alphabetic index bar and a background-app shortcut.
 
 - Package: `org.stilllauncher`
-- Version line: `0.3.2`
+- Version line: `0.3.3`
 - minSdk 32 / targetSdk 36 / compileSdk 36
 - Kotlin 2.2.21, AGP 8.13.2, Gradle 8.13, JDK 17, Compose BOM 2025.04.01
 - Single-activity Compose; no XML layouts, no Navigation library, no database, no DI framework
@@ -52,7 +52,7 @@ SIGNING_KEYSTORE_PATH=/path/to/release.jks \
 SIGNING_KEYSTORE_PASSWORD=... \
 SIGNING_KEY_ALIAS=... \
 SIGNING_KEY_PASSWORD=... \
-./gradlew :app:assembleRelease -PversionName=0.3.2
+./gradlew :app:assembleRelease -PversionName=0.3.3
 ```
 
 Never echo secrets. Never commit a keystore or `keystore.properties`.
@@ -138,6 +138,8 @@ Edit `MonitorEngine.onForeground`; keep both foreground feeds calling it; preser
 ### Work on recents
 
 Ordering is `addRecentApp` in `Models.kt` (test it); recording is `MonitorEngine.recordRecent` (launchable filter, ten-minute throttle); clearing is `SettingsStore.setRecentApps(emptyList())` through the ViewModel.
+
+The home task itself is separate from that local history. `MainActivity` is single-task with an empty affinity and must not use `excludeFromRecents`, `clearTaskOnLaunch` or `resumeWhilePausing`; those flags produce a blank OEM overview on Infinix/XOS. `HomeGestureGuard` dismisses an overview that opens over Home (accessibility required, dock Recents suppresses it). `Diagnostics` provides the in-memory log behind Settings → Home gesture diagnostics.
 
 ## Verification
 

@@ -67,6 +67,14 @@ OEM dual apps, parallel apps and work profiles are separate Android users. `AppR
 
 Launches use `LauncherApps.startMainActivity(..., userHandle, ...)`, so a clone opens in the correct profile. Favourites, folders, rename and hide are keyed by `profileKey`; existing main-profile settings remain compatible. Blocks, daily limits, notification filtering and grayscale are deliberately limited to the main profile: foreground monitoring runs in the current user and cannot enforce behaviour in another profile.
 
+## Home task and gesture navigation
+
+`MainActivity` is the only HOME activity. It uses `singleTask`, `stateNotNeeded`, an empty task affinity and a comprehensive `configChanges` list, with HOME and LAUNCHER categories on the same activity. The task is deliberately **not** excluded from Recents, and the activity does not use `clearTaskOnLaunch` or `resumeWhilePausing`. AOSP's `TaskSnapshotController` never snapshots HOME-type tasks, so OEM recents views that list the home task have no image to draw; excluding the task made some of those views show an empty slot instead. Neither flag combination is reliable on its own.
+
+`HomeGestureGuard` handles the remaining case. When a window whose class looks like an overview/recents surface appears while the launcher was the focused window, it sends `GLOBAL_ACTION_HOME` once, which closes the blank overview. It ignores deliberately opened Recents (the dock button suppresses it for 2.5 s) and Recents opened from another app. The guard needs the accessibility service and is exposed as **Settings → Gestures → Keep the home gesture on Home**; it defaults to on for Infinix, Tecno and itel builds.
+
+`Diagnostics` keeps the last 200 activity lifecycle and window events in memory. **Settings → Setup & help → Home gesture diagnostics** renders them with Copy and Clear actions. It records package and class names only, never content, is not written to disk and is not uploaded.
+
 ## Notifications
 
 `NotificationFilterService` keeps a live copy of `Settings` from DataStore. When filtering is active and an allow-list is configured, it cancels notifications from packages outside the list (except its own and ongoing/foreground-service notifications) and records a title/text snapshot in an in-memory, 50-item store for the settings screen. With no allow-list, all notifications pass.

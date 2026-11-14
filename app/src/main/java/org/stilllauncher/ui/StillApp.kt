@@ -27,6 +27,7 @@ sealed interface Route {
     data object HiddenApps : Route
     data object Permissions : Route
     data object InstallHelp : Route
+    data object Diagnostics : Route
     data object About : Route
 }
 
@@ -150,6 +151,8 @@ fun StillApp(viewModel: StillViewModel, settings: Settings, homeRequest: Int) {
         )
 
         is Route.InstallHelp -> InstallHelpScreen(onBack = pop)
+
+        is Route.Diagnostics -> DiagnosticsScreen(settings = settings, onBack = pop)
 
         is Route.About -> AboutScreen(onBack = pop)
     }

@@ -4,6 +4,23 @@ All notable changes to this project are documented here. This project follows [S
 
 ## [Unreleased]
 
+## [0.3.3] - 2026-11-14
+
+### Changed
+
+- The home activity now uses the same task configuration as the third-party launchers that work under OEM gesture navigation: `singleTask`, an empty task affinity, no `excludeFromRecents`, no `clearTaskOnLaunch` and no `resumeWhilePausing`. Configuration changes are handled in place.
+- The app icon launches the home activity again. The no-display trampoline that older builds used could leave an empty task behind on some OEMs.
+
+### Added
+
+- **Home gesture guard** (Settings → Gestures): when the system overview opens blank immediately after the Home gesture, the launcher returns to Home. It is on by default on Infinix, Tecno and itel devices. The Recents button in the dock still opens the overview normally.
+- **Home gesture diagnostics** (Settings → Setup & help): an in-memory log of activity lifecycle and window events with Copy and Clear actions. It is never written to disk, never uploaded, and is cleared when the process ends.
+
+### Fixed
+
+- Gesturing Home while already on Home no longer leaves a wallpaper-only screen on Infinix/XOS. The task is no longer excluded from Recents, so an OEM recents view has no reason to draw an empty slot; if it still opens, the home gesture guard closes it.
+- Runtime `setExcludeFromRecents` and stale-task removal were removed. Those calls could delete the task the OEM was using as Home, which produced the same blank screen.
+
 ## [0.3.2] - 2026-11-14
 
 ### Changed
