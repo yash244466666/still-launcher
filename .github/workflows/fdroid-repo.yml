@@ -57,6 +57,43 @@ jobs:
           fi
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
+      - name: Restore previously published APKs
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # F-Droid clients keep a cached index until the user refreshes the
+          # repository. If an old index points at a version whose APK was
+          # deleted, the download fails with a 404. Keep every APK we have
+          # already published so those clients can still complete the download.
+          mkdir -p fdroid/repo
+
+          # Copies that are already on gh-pages.
+          if git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
+            git fetch --depth=1 origin gh-pages
+            rm -rf "$RUNNER_TEMP/published"
+            mkdir -p "$RUNNER_TEMP/published"
+            git archive FETCH_HEAD repo | tar -x -C "$RUNNER_TEMP/published"
+            if compgen -G "$RUNNER_TEMP/published/repo/*.apk" >/dev/null; then
+              cp -n "$RUNNER_TEMP"/published/repo/*.apk fdroid/repo/
+            fi
+          fi
+
+          # And every stable release asset. The gh-pages copy alone is not
+          # enough: an earlier run could have removed an APK before this
+          # retention existed.
+          gh release list --repo "$GITHUB_REPOSITORY" \
+            --exclude-pre-releases --limit 100 --json tagName --jq '.[].tagName' |
+          while IFS= read -r tag; do
+            [ -n "$tag" ] || continue
+            gh release download "$tag" \
+              --repo "$GITHUB_REPOSITORY" \
+              --pattern 'still-launcher-*-release.apk' \
+              --dir fdroid/repo --clobber || true
+          done
+          ls -lh fdroid/repo
+
       - name: Download release APK
         shell: bash
         env:
