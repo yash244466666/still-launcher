@@ -29,12 +29,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowForward
-import androidx.compose.material.icons.outlined.Phone
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -50,7 +45,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
@@ -111,13 +105,6 @@ fun HomeScreen(
         Modifier
             .fillMaxSize()
             .statusBarsPadding()
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onDoubleTap = {
-                        if (settings.doubleTapLock) SystemActions.lockScreen()
-                    }
-                )
-            }
             .pointerInput(settings.swipeUpSearch, settings.swipeDownNotifications) {
                 detectVerticalDragGestures(
                     onDragStart = { dragY = 0f },
@@ -128,6 +115,13 @@ fun HomeScreen(
                         } else if (dragY > 110f && settings.swipeDownNotifications) {
                             SystemActions.expandNotifications(context)
                         }
+                    }
+                )
+            }
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onDoubleTap = {
+                        if (settings.doubleTapLock) SystemActions.lockScreen()
                     }
                 )
             }
@@ -235,11 +229,9 @@ private fun RecentAppCard(label: String, lastUsed: Long, onReturn: () -> Unit) {
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Row(
-            Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            AppMonogram(label, size = 38.dp)
-            Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(
                     label,
@@ -258,17 +250,11 @@ private fun RecentAppCard(label: String, lastUsed: Long, onReturn: () -> Unit) {
                 onClick = onReturn,
                 shape = RoundedCornerShape(12.dp),
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                    horizontal = 12.dp,
+                    horizontal = 14.dp,
                     vertical = 8.dp
                 )
             ) {
                 Text("Continue")
-                Spacer(Modifier.width(4.dp))
-                Icon(
-                    Icons.AutoMirrored.Outlined.ArrowForward,
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp)
-                )
             }
         }
     }
@@ -286,21 +272,6 @@ private fun FavouritesEmpty(onOpenAllApps: () -> Unit, modifier: Modifier = Modi
             Modifier.padding(22.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Box(
-                Modifier
-                    .size(52.dp)
-                    .clip(RoundedCornerShape(17.dp))
-                    .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    StillIcons.Grid,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(26.dp)
-                )
-            }
-            Spacer(Modifier.height(12.dp))
             Text("Your favourites live here", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(4.dp))
             Text(
@@ -314,12 +285,6 @@ private fun FavouritesEmpty(onOpenAllApps: () -> Unit, modifier: Modifier = Modi
                 onClick = onOpenAllApps,
                 shape = RoundedCornerShape(14.dp)
             ) {
-                Icon(
-                    StillIcons.Grid,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(Modifier.width(8.dp))
                 Text("Browse all apps")
             }
         }
@@ -343,56 +308,41 @@ private fun HomeDock(
             Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 4.dp, vertical = 6.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            DockItem(Icons.Outlined.Phone, "Call", onCall)
-            DockItem(StillIcons.History, "Recents", onRecents)
-            DockItem(StillIcons.Grid, "All apps", onAllApps, emphasized = true)
-            DockItem(Icons.Outlined.Settings, "Settings", onSettings)
+            DockTextItem("Call", onCall)
+            DockTextItem("Recents", onRecents)
+            DockTextItem("All apps", onAllApps, emphasized = true)
+            DockTextItem("Settings", onSettings)
         }
     }
 }
 
 @Composable
-private fun RowScope.DockItem(
-    icon: ImageVector,
+private fun RowScope.DockTextItem(
     label: String,
     onClick: () -> Unit,
     emphasized: Boolean = false
 ) {
-    Column(
+    Box(
         Modifier
             .weight(1f)
-            .clip(RoundedCornerShape(16.dp))
-            .clickable(onClick = onClick)
-            .padding(vertical = 6.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Box(
-            Modifier
-                .size(38.dp)
-                .clip(RoundedCornerShape(13.dp))
-                .background(
-                    if (emphasized) MaterialTheme.colorScheme.primary
-                    else androidx.compose.ui.graphics.Color.Transparent
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                icon,
-                contentDescription = label,
-                tint = if (emphasized) MaterialTheme.colorScheme.onPrimary
-                else MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.size(22.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(
+                if (emphasized) MaterialTheme.colorScheme.primary
+                else androidx.compose.ui.graphics.Color.Transparent
             )
-        }
-        Spacer(Modifier.height(3.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 4.dp, vertical = 14.dp),
+        contentAlignment = Alignment.Center
+    ) {
         Text(
             label,
-            style = MaterialTheme.typography.labelMedium,
-            color = if (emphasized) MaterialTheme.colorScheme.primary
-            else MaterialTheme.colorScheme.onSurfaceVariant
+            style = MaterialTheme.typography.labelLarge,
+            color = if (emphasized) MaterialTheme.colorScheme.onPrimary
+            else MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )
     }
 }

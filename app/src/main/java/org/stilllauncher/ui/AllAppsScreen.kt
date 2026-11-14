@@ -33,9 +33,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Clear
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -60,7 +58,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
@@ -83,8 +80,7 @@ private sealed interface ListEntry {
 private data class HeaderEntry(
     val title: String,
     override val id: String,
-    val description: String? = null,
-    val icon: ImageVector? = null
+    val description: String? = null
 ) : ListEntry
 
 private data class LetterEntry(val letter: String) : ListEntry {
@@ -157,8 +153,7 @@ fun AllAppsScreen(
                     HeaderEntry(
                         "Recent apps",
                         "header-recent",
-                        "Apps you used recently",
-                        StillIcons.History
+                        "Apps you used recently"
                     )
                 )
                 recentApps.forEach { add(AppEntryItem(it, "recent-${it.profileKey}")) }
@@ -168,8 +163,7 @@ fun AllAppsScreen(
                     HeaderEntry(
                         "Favourites",
                         "header-favourites",
-                        "${favoriteApps.size} app${if (favoriteApps.size == 1) "" else "s"} on your home screen",
-                        Icons.Outlined.Star
+                        "${favoriteApps.size} app${if (favoriteApps.size == 1) "" else "s"} on your home screen"
                     )
                 )
                 favoriteApps.forEach { add(AppEntryItem(it, "fav-${it.profileKey}")) }
@@ -179,8 +173,7 @@ fun AllAppsScreen(
                     HeaderEntry(
                         "Folders",
                         "header-folders",
-                        "${settings.folders.size} folder${if (settings.folders.size == 1) "" else "s"}",
-                        StillIcons.Folder
+                        "${settings.folders.size} folder${if (settings.folders.size == 1) "" else "s"}"
                     )
                 )
                 settings.folders.forEach { folder ->
@@ -199,8 +192,7 @@ fun AllAppsScreen(
                     HeaderEntry(
                         "All apps",
                         "header-all",
-                        "${rest.size} app${if (rest.size == 1) "" else "s"} · A to Z",
-                        StillIcons.Grid
+                        "${rest.size} app${if (rest.size == 1) "" else "s"} · A to Z"
                     )
                 )
                 grouped.forEach { (letter, list) ->
@@ -260,9 +252,11 @@ fun AllAppsScreen(
                 .focusRequester(focusRequester)
         )
         if (query.isBlank()) {
-            HintRow(
-                icon = Icons.Outlined.Info,
-                text = "Tap to open · long-press for favourite, limits and more"
+            Text(
+                "Tap to open · long-press for favourite, limits and more",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
             )
         }
 
@@ -303,8 +297,7 @@ fun AllAppsScreen(
                         when (entry) {
                             is HeaderEntry -> SectionHeader(
                                 entry.title,
-                                entry.description,
-                                entry.icon
+                                entry.description
                             )
 
                             is LetterEntry -> Row(

@@ -90,8 +90,6 @@ fun AppActionsDialog(
                 .padding(bottom = 16.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                AppMonogram(label, size = 52.dp)
-                Spacer(Modifier.width(14.dp))
                 Column(Modifier.weight(1f)) {
                     Text(label, style = MaterialTheme.typography.titleLarge)
                     Text(

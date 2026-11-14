@@ -703,8 +703,6 @@ fun AboutScreen(onBack: () -> Unit) {
             Spacer(Modifier.height(16.dp))
             SettingsCard {
                 Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
-                    AppMonogram("Still Launcher", size = 58.dp)
-                    Spacer(Modifier.width(16.dp))
                     Column {
                         Text("Still Launcher", style = MaterialTheme.typography.titleLarge)
                         Text(

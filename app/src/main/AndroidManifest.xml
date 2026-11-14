@@ -37,13 +37,15 @@
         android:theme="@style/Theme.StillLauncher">
 
         <!--
-            Home activity configuration mirrors AOSP/Pixel Launcher: no
-            excludeFromRecents (gesture navigation needs the home task),
-            an empty affinity, clearTaskOnLaunch and resumeWhilePausing.
+            Home activity configuration follows AOSP/Pixel Launcher's
+            transition flags. The task is also kept out of Recents: several
+            OEM recents implementations draw a blank card for a home task
+            that has no snapshot, which looked like a blank home screen.
         -->
         <activity
             android:name=".MainActivity"
             android:clearTaskOnLaunch="true"
+            android:excludeFromRecents="true"
             android:exported="true"
             android:launchMode="singleTask"
             android:resizeableActivity="true"

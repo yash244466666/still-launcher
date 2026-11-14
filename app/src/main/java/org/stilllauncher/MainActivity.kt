@@ -39,6 +39,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        excludeCurrentTaskFromRecents()
         setContent {
             val settings by viewModel.settings.collectAsStateWithLifecycle()
             val current = settings
@@ -105,11 +106,24 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         viewModel.refreshApps()
+        excludeCurrentTaskFromRecents()
         removeStaleLauncherTasks()
         val settings = viewModel.settings.value
         if (settings?.introDone == true && settings.monitorEnabled) {
             MonitorService.start(this)
         }
+    }
+
+    /**
+     * Reinforces the manifest flag at runtime. Some OEM recents views only
+     * honour the task-level flag, and a home task without a snapshot appears
+     * as a blank full-screen card.
+     */
+    private fun excludeCurrentTaskFromRecents() {
+        val manager = getSystemService(ActivityManager::class.java) ?: return
+        manager.appTasks
+            .firstOrNull { it.taskInfo.id == taskId }
+            ?.setExcludeFromRecents(true)
     }
 
     /**

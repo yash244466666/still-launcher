@@ -25,6 +25,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material.icons.outlined.DateRange
@@ -501,8 +502,6 @@ private fun LimitCard(
                 .padding(14.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                AppMonogram(label, size = 40.dp)
-                Spacer(Modifier.width(14.dp))
                 Column(Modifier.weight(1f)) {
                     Text(label, style = MaterialTheme.typography.bodyLarge)
                     Text(
@@ -517,7 +516,7 @@ private fun LimitCard(
                     )
                 }
                 Icon(
-                    Icons.Outlined.DateRange,
+                    Icons.AutoMirrored.Outlined.KeyboardArrowRight,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(18.dp)
@@ -980,8 +979,6 @@ fun NotificationsScreen(
                     ) {
                         Column(Modifier.padding(14.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                AppMonogram(appLabel(context, item.packageName), size = 30.dp)
-                                Spacer(Modifier.width(10.dp))
                                 Text(
                                     appLabel(context, item.packageName),
                                     style = MaterialTheme.typography.labelLarge,
@@ -1141,8 +1138,6 @@ fun ScreenTimeScreen(
                         ) {
                             Column(Modifier.padding(14.dp)) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    AppMonogram(label, size = 36.dp)
-                                    Spacer(Modifier.width(12.dp))
                                     Text(
                                         label,
                                         style = MaterialTheme.typography.bodyLarge,
@@ -1200,11 +1195,9 @@ fun HiddenAppsScreen(
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                     ) {
                         Row(
-                            Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                            Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            AppMonogram(label, size = 36.dp)
-                            Spacer(Modifier.width(12.dp))
                             Text(
                                 label,
                                 modifier = Modifier.weight(1f),

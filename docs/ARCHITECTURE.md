@@ -87,7 +87,7 @@ The 0.3 redesign is built from a small set of shared composables in `Components.
 - `SectionHeader` and `SettingsCard` — labelled groups on a rounded card surface.
 - `NavRow`, `ToggleRow`, `AppToggleRow`, `ChoiceRow` — rows with an icon tile and an explicit affordance (chevron, switch or radio button).
 - `PrimaryButton`, `SecondaryButton`, `AddButton` — the three button weights used across editors.
-- `EmptyState`, `InfoCard`, `StatusPill`, `AppMonogram`, `CodeBlock` — empty lists always offer the action that fills them; explanations and state never rely on colour alone.
+- `EmptyState`, `InfoCard`, `StatusPill`, `CodeBlock` — empty lists always offer the action that fills them; explanations and state never rely on colour alone.
 - `StillIcons` — original vectors for timer, contrast, palette, folder, gesture, history, shield, grid, chart, eye-off and clock, drawn on the same 24×24 grid as Material's core icons.
 
 `Theme.kt` derives a calm accent, soft card surfaces and outline tones from the user's background colour rather than hard-coding a second palette. Text colours are left to `Surface(contentColor = ...)`; setting colours inside `Typography` breaks Material button labels. System bar icon appearance follows the resolved light/dark theme in `MainActivity`.

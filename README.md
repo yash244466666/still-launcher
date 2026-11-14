@@ -8,7 +8,7 @@ A text-first Android launcher for digital wellbeing, built as an independent ope
 
 Still Launcher replaces the home-screen icon grid with a short list of names, then adds optional focus tools: timed app blocks, day/time schedules, daily app budgets, per-app grayscale, notification filtering, and screen-time statistics. There is no account, no advertising, and no analytics SDK.
 
-> **Status:** 0.3.1. Built, unit-tested (20/20) and smoke-tested on an Android 15 (API 35) emulator. Not yet tested on physical devices. See [Limitations](#limitations).
+> **Status:** 0.3.2. Built, unit-tested (20/20) and smoke-tested on an Android 15 (API 35) emulator. Not yet tested on physical devices. See [Limitations](#limitations).
 
 ---
 
@@ -71,8 +71,8 @@ This is an independent clean-room project. **No source code, assets, strings, ic
 
 | Area | What works |
 |---|---|
-| Home screen | Clock + date circle with battery arc, a labelled icon dock, background-app card with one-tap return, Recents shortcut, favourites with letter badges and a guided empty state |
-| App list | Letter-badge rows with a clear search field, a long-press hint and a two-sided drag/tap alphabetic index with a live current-section highlight; dual/cloned apps from all Android profiles, a Recent apps section, favourites, folders, hide/rename/move/unhide, app info, uninstall |
+| Home screen | Clock + date circle with battery arc, a text-only dock, background-app card with one-tap return, Recents shortcut, favourites as plain words and a guided empty state |
+| App list | Pure text rows with a clear search field, a long-press hint and a two-sided drag/tap alphabetic index with a live current-section highlight; dual/cloned apps from all Android profiles, a Recent apps section, favourites, folders, hide/rename/move/unhide, app info, uninstall |
 | App blocking | Block any app for 1 h – 30 days; full-screen block screen with countdown and an explicit “end block early” escape |
 | Schedules | Recurring day/time windows that block a chosen set of apps; overnight windows supported |
 | Daily limits | Per-app daily budget; choose remind / exit / 15-minute cooldown behaviour; live usage display |
@@ -100,8 +100,8 @@ This is an independent clean-room project. **No source code, assets, strings, ic
 To cut a release:
 
 ```bash
-git tag v0.3.1
-git push origin v0.3.1
+git tag v0.3.2
+git push origin v0.3.2
 ```
 
 Or run the **Release** workflow manually with a version number.

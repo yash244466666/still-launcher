@@ -6,7 +6,7 @@ This file is the project handbook for Claude Code and other AI coding agents. Re
 
 Still Launcher is an independent, GPL-3.0, text-first Android home-screen replacement focused on digital wellbeing. It is a single-activity Jetpack Compose app with no backend, no account, no analytics and **no `INTERNET` permission**.
 
-Current release line: **0.3.1**. State: buildable, lint-clean, 20/20 JVM tests, and smoke-tested on an Android 15 (API 35) emulator. It has not been tested on physical devices.
+Current release line: **0.3.2**. State: buildable, lint-clean, 20/20 JVM tests, and smoke-tested on an Android 15 (API 35) emulator. It has not been tested on physical devices.
 
 The project is a clean-room implementation of an idea. Never copy source code, strings, drawables, icons or branding from another launcher.
 
@@ -184,7 +184,7 @@ Version 0.3.0 replaced the original bare text rows with a card-based design syst
 - `ScreenScaffold` supplies the header, back button and optional trailing action. `SectionHeader` + `SettingsCard` group related settings.
 - Use `NavRow` for navigation, `ToggleRow` or `AppToggleRow` for switches, and `ChoiceRow` for radio-style options. Every tappable row must have an icon tile, a label and a visible affordance (chevron or switch). Do not add bare `TextButton` rows.
 - Use `PrimaryButton` for the main action on an editor, `SecondaryButton` for a supporting action, and `AddButton` in a screen header.
-- Use `EmptyState` with an action whenever a list is empty, `InfoCard` for explanations, `StatusPill` for state, and `AppMonogram` for app identity.
+- Use `EmptyState` with an action whenever a list is empty, `InfoCard` for explanations, and `StatusPill` for state. App names in the launcher are plain text: do not add app icons, letter badges or monograms.
 - Cards use `surfaceContainer`; dividers use `outlineVariant`; the accent is `colorScheme.primary`. Never hard-code colours outside `Theme.kt`.
 - Use `StillIcons` for concepts missing from `material-icons-core`, keeping paths on a 24×24 grid.
 - Touch targets stay at least 48 dp. Text labels must remain readable with the largest in-app font size.

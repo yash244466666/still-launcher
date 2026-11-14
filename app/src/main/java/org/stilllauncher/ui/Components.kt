@@ -586,25 +586,6 @@ fun AddButton(label: String = "Add", onClick: () -> Unit) {
     }
 }
 
-@Composable
-fun AppMonogram(label: String, size: Dp = 40.dp) {
-    val initial = label.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "?"
-    Box(
-        Modifier
-            .size(size)
-            .clip(RoundedCornerShape(size / 3))
-            .background(MaterialTheme.colorScheme.primaryContainer),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            initial,
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = (size.value * 0.40f).sp
-        )
-    }
-}
-
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AppRow(
@@ -622,12 +603,10 @@ fun AppRow(
                 onClick = onClick,
                 onLongClick = onLongClick
             )
-            .heightIn(min = 58.dp)
-            .padding(start = (14 + indent).dp, end = 14.dp, top = 8.dp, bottom = 8.dp),
+            .heightIn(min = 56.dp)
+            .padding(start = (20 + indent).dp, end = 20.dp, top = 6.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        AppMonogram(label, size = if (indent > 0) 34.dp else 40.dp)
-        Spacer(Modifier.width(14.dp))
         Text(
             label,
             style = MaterialTheme.typography.bodyLarge,
@@ -669,11 +648,9 @@ fun AppToggleRow(
                 onValueChange = onCheckedChange
             )
             .heightIn(min = 56.dp)
-            .padding(horizontal = 14.dp, vertical = 8.dp),
+            .padding(horizontal = 20.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        AppMonogram(label, size = 36.dp)
-        Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
             Text(label, style = MaterialTheme.typography.bodyLarge)
             if (subtitle != null) {
@@ -702,11 +679,9 @@ fun FolderRow(
             .fillMaxWidth()
             .combinedClickable(onClick = onClick, onLongClick = onLongClick)
             .heightIn(min = 58.dp)
-            .padding(horizontal = 14.dp, vertical = 8.dp),
+            .padding(horizontal = 20.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconTile(StillIcons.Folder)
-        Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
             Text(name, style = MaterialTheme.typography.bodyLarge)
             Text(
@@ -1059,11 +1034,10 @@ fun AppPickerDialog(
                                         setOf(app.packageName)
                                     }
                                 }
-                                .heightIn(min = 54.dp),
+                                .heightIn(min = 54.dp)
+                                .padding(horizontal = 4.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            AppMonogram(app.label, size = 34.dp)
-                            Spacer(Modifier.width(12.dp))
                             Text(
                                 app.label,
                                 style = MaterialTheme.typography.bodyLarge,

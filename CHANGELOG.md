@@ -4,6 +4,19 @@ All notable changes to this project are documented here. This project follows [S
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-11-14
+
+### Changed
+
+- The launcher is text-first again: app letter badges, the home dock icons and decorative section icons are gone. App names are plain words in the list, search results, pickers, limits, screen time and hidden-apps screens. Small control icons remain only in Settings and the app action sheet so switches and buttons stay easy to find.
+- The home dock is a single row of text buttons (`Call · Recents · All apps · Settings`) with the All apps button highlighted.
+
+### Fixed
+
+- The home task is excluded from Recents both in the manifest and at runtime. Some OEM recents views showed a blank full-screen card for the home task when other recent apps were present; the launcher now never enters that carousel.
+- In-app swipe gestures work again: vertical drags are detected before the double-tap detector, so swipe up opens the app list and swipe down opens the notification shade. Both directions were verified on the emulator.
+- Stale duplicate launcher tasks from older builds are removed when the app is the default home, and starting from the app icon no longer creates a second task.
+
 ## [0.3.1] - 2026-11-14
 
 ### Fixed
