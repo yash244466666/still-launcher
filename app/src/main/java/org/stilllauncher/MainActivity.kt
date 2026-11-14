@@ -1,5 +1,6 @@
 package org.stilllauncher
 
+import android.app.ActivityManager
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -28,6 +29,7 @@ import org.stilllauncher.service.MonitorService
 import org.stilllauncher.ui.OnboardingScreen
 import org.stilllauncher.ui.StillApp
 import org.stilllauncher.ui.theme.StillTheme
+import org.stilllauncher.util.Permissions
 
 class MainActivity : ComponentActivity() {
 
@@ -103,9 +105,32 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         viewModel.refreshApps()
+        removeStaleLauncherTasks()
         val settings = viewModel.settings.value
         if (settings?.introDone == true && settings.monitorEnabled) {
             MonitorService.start(this)
+        }
+    }
+
+    /**
+     * Older builds exposed MainActivity with CATEGORY_LAUNCHER, so tapping the
+     * app icon could create a second, standard task for the same screen. Those
+     * stale tasks can appear as a blank card in Recents. Now that the icon uses
+     * OpenActivity, remove any duplicates once this app is the default home.
+     */
+    private fun removeStaleLauncherTasks() {
+        if (!Permissions.isDefaultLauncher(this)) return
+        val manager = getSystemService(ActivityManager::class.java) ?: return
+        val currentTask = taskId
+        manager.appTasks.forEach { task ->
+            val info = task.taskInfo
+            val baseClass = info.baseActivity?.className
+                ?: info.baseIntent.component?.className
+            if (info.id != currentTask &&
+                baseClass == MainActivity::class.java.name
+            ) {
+                runCatching { task.finishAndRemoveTask() }
+            }
         }
     }
 }

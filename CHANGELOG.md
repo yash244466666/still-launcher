@@ -4,6 +4,14 @@ All notable changes to this project are documented here. This project follows [S
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-11-14
+
+### Fixed
+
+- Gesturing Home while already on the home screen no longer leaves a blank, wallpaper-only screen. The home activity now uses the AOSP/Pixel Launcher configuration: `clearTaskOnLaunch`, `resumeWhilePausing`, `resizeableActivity`, an empty task affinity and no `excludeFromRecents`.
+- The app icon now opens a no-display trampoline instead of the home activity. The home activity no longer advertises `CATEGORY_LAUNCHER`, so tapping the icon cannot create a second standard task; duplicate tasks left by older releases are removed once the app is the default home.
+- The launcher no longer lists itself in its own app list.
+
 ## [0.3.0] - 2026-11-14
 
 ### Changed

@@ -36,18 +36,44 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.StillLauncher">
 
+        <!--
+            Home activity configuration mirrors AOSP/Pixel Launcher: no
+            excludeFromRecents (gesture navigation needs the home task),
+            an empty affinity, clearTaskOnLaunch and resumeWhilePausing.
+        -->
         <activity
             android:name=".MainActivity"
-            android:excludeFromRecents="true"
+            android:clearTaskOnLaunch="true"
             android:exported="true"
             android:launchMode="singleTask"
+            android:resizeableActivity="true"
+            android:resumeWhilePausing="true"
             android:stateNotNeeded="true"
+            android:taskAffinity=""
             android:theme="@style/Theme.StillLauncher">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.HOME" />
                 <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <!--
+            The app icon opens this trampoline instead of the home activity.
+            Keeping LAUNCHER off the home activity prevents a second, standard
+            task from being created when the icon is tapped.
+        -->
+        <activity
+            android:name=".OpenActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:noHistory="true"
+            android:taskAffinity="org.stilllauncher.open"
+            android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
 

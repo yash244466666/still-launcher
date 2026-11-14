@@ -11,7 +11,7 @@ It is an **independent clean-room project**. There is no affiliation with, endor
 ## Facts you can rely on
 
 - Package: `org.stilllauncher`
-- Current line: `0.3.0`
+- Current line: `0.3.1`
 - minSdk 32, targetSdk 36, compileSdk 36
 - Kotlin 2.2.21, AGP 8.13.2, Gradle 8.13, JDK 17, Compose BOM 2025.04.01
 - Single activity, Jetpack Compose, no XML layouts, no Navigation library
@@ -263,9 +263,9 @@ The metadata lives in `fdroid/metadata/`. The generated `fdroid/config.yml` and 
 Releases are created by pushing a semantic-version tag:
 
 ```bash
-git tag v0.3.0
+git tag v0.3.1
 git push origin main
-git push origin v0.3.0
+git push origin v0.3.1
 ```
 
 The Release workflow:

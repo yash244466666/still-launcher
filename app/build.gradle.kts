@@ -20,7 +20,7 @@ fun versionCodeFor(versionName: String): Int {
     return 100_000 + major * 10_000 + minor * 100 + patch
 }
 
-val appVersionName = providers.gradleProperty("versionName").orNull ?: "0.3.0"
+val appVersionName = providers.gradleProperty("versionName").orNull ?: "0.3.1"
 val appVersionCode = providers.gradleProperty("versionCode").orNull?.toIntOrNull()
     ?: versionCodeFor(appVersionName)
 val signingKeystore = System.getenv("SIGNING_KEYSTORE_PATH")

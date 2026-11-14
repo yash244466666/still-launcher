@@ -75,6 +75,7 @@ class AppRepository(private val context: Context) {
         }
 
         return apps.distinctBy { it.profileKey }
+            .filterNot { it.packageName == context.packageName }
             .sortedWith(
                 compareBy(
                     { it.label.lowercase(Locale.getDefault()) },
